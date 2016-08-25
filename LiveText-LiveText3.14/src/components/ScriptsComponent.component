@@ -1,0 +1,39 @@
+<apex:component >
+   <apex:includeScript value="/xdomain/xdomain.js"/>
+   <apex:includeScript value="/soap/ajax/16.0/connection.js"/>
+   <apex:includeScript value="/support/console/33.0/integration.js"/>
+    <apex:includeScript value="{!URLFOR($Resource.LiveText, '/jquery/jquery-1.10.2.js')}" />
+   <script> 
+        var j$ = jQuery.noConflict();
+        var popupBlockerMsg = '{!$Label.PopupWindowErrMsg}';
+
+        function checkNetConnection(){
+        	jQuery.ajaxSetup({async:false});
+         	var re="";
+         	var r=Math.round(Math.random() * 10000);
+         	j$.get("{!URLFOR($Resource.LiveText,'images/LTicon32.png')}",{subins:r},function(d){
+            	re=true;
+            }).error(function(){
+            	re=false;
+            });
+            
+            jQuery.ajaxSetup({async:true});
+         	return re;
+        }
+    </script>
+    <apex:includeScript value="{!URLFOR($Resource.LiveText, '/js/json2.js')}" />
+   <apex:includeScript value="{!URLFOR($Resource.LiveText, '/js/cometd.js')}" />
+   <apex:includeScript value="{!URLFOR($Resource.LiveText, '/jquery/jquery.cometd.js')}" />
+   <apex:includeScript value="{!URLFOR($Resource.LiveText, '/jquery/jquery-block-ui.js')}" />
+    
+    <apex:includeScript value="{!URLFOR($Resource.Toast, '/js/noty/packaged/jquery.noty.packaged.min.js')}" />
+    <apex:stylesheet value="{!URLFOR($Resource.LiveText, '/css/master.styles.css')}"/>
+    <apex:stylesheet value="{!URLFOR($Resource.LiveText, '/css/custom.live.text.styles.css')}"/>
+    <apex:stylesheet value="{!URLFOR($Resource.LiveText, '/css/chatPanel.css')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.LiveText, '/js/live.text.hovercard.min.js')}" />
+    
+     <apex:stylesheet value="{!URLFOR($Resource.LiveText, '/css/dropitforlivetext.css')}"/>
+     <apex:includeScript value="{!URLFOR($Resource.LiveText, '/js/dropit.js')}" />
+     
+     <apex:includeScript value="{!URLFOR($Resource.LiveText, '/js/jquery.linkify.min.js')}" />
+</apex:component>

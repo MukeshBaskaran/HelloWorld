@@ -1,0 +1,30 @@
+{!REQUIRESCRIPT('/soap/ajax/31.0/connection.js')}; 
+{!REQUIRESCRIPT('/soap/ajax/31.0/apex.js')}; 
+{!REQUIRESCRIPT('/support/console/31.0/integration.js')}; 
+ 
+var objectId = window.location.pathname.substring(1); 
+ 
+var accountPrefix = objectId.substring(0, 3); 
+var phoneInformation = JSON.parse(sforce.apex.execute("LiveText.RetrievePreferredPhoneNumber","getToPhoneInformationFromObject",{selectedObjId:objectId}));
+var phoneNumber = phoneInformation['phone']; 
+var ownerId = phoneInformation['ownerId']; 
+var params = '&phone='+encodeURIComponent(phoneNumber) +'&oid='+objectId+'&conversationtype=outbound&objectprefix='+accountPrefix+'&ownerId='+ownerId;
+ 
+var conversationSessionPrefix = '/{!$ObjectType.LiveText__Conversation_Session__c}/e?cvid=null'+params;
+ 
+if(sforce.console.isInConsole()) { 
+                sforce.console.openPrimaryTab(null, conversationSessionPrefix, true, '{!HTMLENCODE($Label.LiveText__TXT_Conversation)}', null);
+                var closeSubtab = function closeSubtab(result) {
+                var tabId = result.id; 
+                                sforce.console.closeTab(tabId);
+                }; 
+                sforce.console.getEnclosingTabId(closeSubtab);
+} 
+else{ 
+                var query = "SELECT Id FROM AppMenuItem WHERE Name='LiveText_Console'";
+                sforce.connection.sessionId = '{!$Api.Session_ID}';
+                var queryResult = sforce.connection.query(query);
+                var records = queryResult.getArray('records');
+                var ltId = records[0].Id; 
+                window.top.location.href = 'https://'+window.location.hostname+'/console?tsid='+ltId +'#'+conversationSessionPrefix;
+}

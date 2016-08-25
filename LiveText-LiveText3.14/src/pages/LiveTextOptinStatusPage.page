@@ -1,0 +1,84 @@
+<apex:page standardController="OptInStatus__c" extensions="LiveTextOptinStatusController" action="{!init}" showHeader="true" sidebar="true">
+	<c:ScriptsComponent id="scmp" />
+	<script type="text/javascript">
+		//This function is called when user clicks on done button on the page and it closes the primary tab if user is in console otherwise
+		// delegate the call to controller.
+		function doneCustomJS(){
+			if(sforce.console.isInConsole()){
+				sforce.console.getEnclosingPrimaryTabId(function(result){
+						sforce.console.closeTab(result.id);
+					}
+				);
+			}else{
+				doneCustomController();
+			}
+		}
+		//This function is called when user clicks on cancel button on the page and it closes the primary tab if user is in console otherwise
+		// delegate the call to controller.
+		function cancelCustomJS(){
+			if(sforce.console.isInConsole()){
+				sforce.console.getEnclosingPrimaryTabId(function(result){
+						sforce.console.closeTab(result.id);
+					}
+				);
+			}else{
+				cancelCustomController();
+			}
+		}
+	</script>
+	<apex:outputPanel id="jsFunctions">
+		<Script type="text/javascript">
+		//This function checks if user selected the livetext number when clicked on the confirm button.
+	    function hideFirstPart(){
+	    	var firstPartBoolean = '{!firstPart}';
+		    if(firstPartBoolean == 'true'){ //user did not select the livetext number so show the same pageblock again. 
+		    }else{ //user selected the livetext number and records inserted successfully so show the confirm page block.
+		    	j$('[id$=first]').addClass('display_none');
+		    	j$('[id$=second]').removeClass('display_none');
+		    }
+	    }
+	    </Script>
+	</apex:outputPanel>
+	<Script type="text/javascript">
+	    j$(document).ready(function() {
+	    	console.log('value when page loaded is '+'{!firstPart}');
+	    });
+    </Script>
+    <br/>
+    <h6 style="font-size: 21.6px;font-family:Arial,​Helvetica,​sans-serif;">{!headerLabel}</h6>
+    <br/><br/>
+    <apex:form >
+	        <apex:outputPanel id="first" rendered="{!firstPart}">
+	        <apex:pageBlock >
+	            <apex:pageBlockButtons >
+	                <apex:commandButton style="margin-left:17.5%" action="{!Confirm}" value="{!buttonText}" reRender="first,second,jsFunctions" onComplete="hideFirstPart(); return false;"/>
+	                <apex:commandButton value="Cancel" onClick="cancelCustomJS(); return false;"/>
+	            </apex:pageBlockButtons>
+	            <apex:pageMessages />
+	            <div style='margin:16px 0px 16px 0px;padding:6px 0px 0px 8px;background-color:#CFEEF8;height:30px;text-aligin:left;font-family:Arial,​Helvetica,​sans-serif;font-weight: bold;font-size: 13px;' id="Information">
+	            	<span>Information</span>
+	   		  	</div> 
+	            <apex:pageBlockSection >
+	                <apex:pageBlockSectionItem >
+	                    <apex:outputLabel value="{!labelText}" for="LiveText__Numbers" style="color: #000000;font-weight: normal;"></apex:outputLabel>
+	                    <apex:selectCheckboxes layout="pageDirection" id="LiveText__Numbers" value="{!ltNumbers}">
+	                        <apex:selectOptions value="{!Numbers}"></apex:selectOptions>
+	                    </apex:selectCheckboxes>
+	                </apex:pageBlockSectionItem>
+	            </apex:pageBlockSection>    
+	        </apex:pageBlock>
+	        </apex:outputPanel>
+	        <apex:outputPanel id="second" styleClass="display_none">
+		        <apex:pageBlock >
+		            <apex:pageBlockButtons >
+		                <apex:commandButton onClick="doneCustomJS(); return false;" value="Done"/>
+		            </apex:pageBlockButtons>
+		            <apex:pageMessages />
+		            <apex:pageBlockSection >
+		            </apex:pageBlockSection>    
+		        </apex:pageBlock>
+	        </apex:outputPanel>
+			<apex:actionFunction action="{!doneCustom}" name="doneCustomController"/>
+			<apex:actionFunction action="{!cancel}" name="cancelCustomController"/>
+    </apex:form>
+</apex:page>

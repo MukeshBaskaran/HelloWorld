@@ -1,0 +1,157 @@
+<apex:page controller="CustomLookupController" tabStyle="User" sidebar="false" id="pageId" showHeader="false">
+	<c:ScriptsComponent id="scmp"/>
+	<style>
+	    .outerdiv {
+	        background-repeat: repeat-x;
+	        background-position: left top;
+	        background: white url(/img/alohaSkin/lookup_bg.png) repeat-x;
+	        height: 100%;
+	        padding-left: 5px;
+	    }
+	     
+	    .innerdiv {
+	        background-image: url(/img/sprites/master.png);
+	        background-position: 0px -1202px;
+	        width: 32px;
+	        height: 32px;
+	        text-align: center;
+	    }  
+	    .empty-column-content {
+        	display: none;
+    	}
+    	.padding-bottom {
+    		padding-bottom: 40px !important;
+    	}
+    	.zero-padding-top{
+    		padding-top: 0px !important
+    	}
+    	.zero-margin{
+    		margin: 0px !important;
+    	}
+    	.margin-bottom{
+    		margin-bottom: 5px;
+    	}
+    	.searchTitle{
+    		padding-top: 4px !important;
+    		padding-bottom: 9px !important;
+    		padding-right: 3px !important;
+    		padding-left: 3px !important;
+    		font-size: 118% !important;
+    		font-weight: bold;
+    		color: #000000 !important;
+    	}
+    	.clear{
+    		font-size: 75% !important;
+    		color: #000000 !important;
+    		text-decoration: underline !important;
+    	}
+    	.column-name{
+    		text-decoration: underline !important;	
+    		color: #000000 !important;
+    	}
+    	.apexp .bPageBlock.apexDefaultPageBlock .pbBody {
+        	margin: 0 !important;
+        	margin-top: 4px !important;
+        }
+        .apexp .bPageBlock.apexDefaultPageBlock .bPageBlock {
+        	margin-top: 4px !important;
+        }
+
+    </style>
+	<apex:form id="mainFormId">
+		<div class="outerdiv">
+			<apex:actionRegion >
+			<div class="lookup padding-bottom">
+				<div class="bPageTitle zero-padding-top">
+					<div class="ptBody secondaryPalette">
+	            		<div class="content">
+	            			<div class="pageTitleIcon innerdiv"></div>
+	            			<h1 style="font-size: 1.8em">{!objectLabel} Lookup</h1>
+	          			</div>
+	        		</div>
+	        	</div>
+	        	<div class="pbBody"> 
+	           		<apex:pageMessages id="msgId"/>
+	           		<apex:inputText id="searchId" value="{!searchByName}" html-placeholder="Search..." style="margin-right: 5px;"/>
+	           		<apex:commandButton value="Go!" action="{!doSearch}" rerender="tblId,sbojectIdField,sbojectNameField,tableTitle" status="ajaxStatus" styleClass="goStyle"/>
+	           		<div class="bDescription zero-margin" style="font-size: .9em">
+	           			You can use "*" as a wildcard next to other characters to improve your search results.
+	           		</div>
+	           	</div>
+           	</div>
+           	</apex:actionRegion>
+           	<apex:actionRegion >
+           	<apex:outputPanel id="tableTitle" layout="block" styleClass="margin-bottom">
+           		<apex:commandLink styleClass="clear" action="{!clearSearch}" rendered="{!NOT(viewRecenltyViwed)}" rerender="tableTitle,tblId,sbojectIdField,sbojectNameField" oncomplete="clearText();" >Clear Search Result</apex:commandLink>
+           		<apex:outputText styleClass="searchTitle" value="Search Result" rendered="{!NOT(viewRecenltyViwed)}" />
+           		<apex:outputText styleClass="searchTitle" value="Recently Viewed {!objectPluralLabel}" rendered="{!viewRecenltyViwed}"/>
+           	</apex:outputPanel>
+           	</apex:actionRegion>
+           	<apex:actionRegion >
+           	<apex:outputPanel id="tblId" layout="none">
+				<apex:pageblock >
+	            	<apex:pageBlockTable value="{!sobjectList}" var="e">
+	            		<apex:repeat value="{!e.columnValues}" var="col">
+	                 		<apex:column >
+	               			<apex:outputLink value="#" styleClass="column-name">
+	               				<apex:actionSupport action="{!onChoose}" event="onclick" reRender="msgId,sbojectIdField,sbojectNameField, tableTitle" oncomplete="fillIn();" status="ajaxStatus">
+	               					 <apex:param name="sobjectIdToPass" assignTo="{!sobjectIdToPass}" value="{!e.obj.Id}" />
+	               				</apex:actionSupport>
+	               				{!col}
+	               			</apex:outputLink>
+	                   		</apex:column>
+	                   	</apex:repeat>
+	                   	<apex:repeat var="header" value="{!headers}">
+				            <apex:column headerValue="{!header}" styleClass="empty-column-content" />
+				        </apex:repeat>
+	            	</apex:pageBlockTable>
+			   	</apex:pageblock>  	
+		   	</apex:outputPanel>
+		   	</apex:actionRegion>
+	   	</div>
+	   	<apex:inputHidden value="{!sobjectIdToPass}" id="sbojectIdField"/>
+        <apex:inputHidden value="{!objectRecordType}" id="sbojectRecordTypeField"/>
+	    <apex:inputHidden value="{!sobjectNameToPass}" id="sbojectNameField"/>
+
+        <apex:inputHidden value="{!objectPluralLabel}" id="sbojectPluralLabel"/>
+	</apex:form>
+	<script>
+  function fillIn(){  
+    var sbojectId = j$('input[id$=sbojectIdField]').val();            
+    var sbojectName = j$('input[id$=sbojectNameField]').val(); 
+    var sbojectKeyPrefix = sbojectId.substring(0,3);
+    var sbojectRecordType = j$('input[id$=sbojectRecordTypeField]').val(); 
+    var sbojectPluralLabel = j$('input[id$=sbojectPluralLabel]').val(); 
+    var winMain1 = window.opener;
+    if (null == winMain1){
+      winMain1=window.parent.opener;
+    }                
+    var elem = winMain1.document.getElementById('{!parentIdToPassHiddenField}');            
+    var elemName = winMain1.document.getElementById('{!parentNameToPassHiddenField}'); 
+    elem.value = sbojectId;
+    elemName.value = sbojectName;
+
+    var msg = {
+      'objectprefix':sbojectKeyPrefix
+      ,'objectid':sbojectId
+      ,'objecttype':sbojectRecordType
+      ,'objectlinkname':sbojectName
+      ,'linked':true
+      ,'objectplurallabel':sbojectPluralLabel,
+      'currentConversationRecordId':null,
+      'currentPrimaryTabID':null
+      };
+
+    winMain1.fireLookup(JSON.stringify(msg));
+    self.close();
+  }
+
+  window.onload = function(){
+    jQuery('[id$=searchId]').focus();
+  };
+
+  function clearText() {
+    jQuery('[id$=searchId]').val("");
+  }
+  </script>
+</apex:page>

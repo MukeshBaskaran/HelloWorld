@@ -1,0 +1,635 @@
+<apex:page controller="LiveTextAdminController" title="LiveTextAdmin" action="{!checkSettings}">
+    <c:ScriptsComponent id="scmp" />
+    <apex:includeScript value="{!URLFOR($Resource.LiveText, 'js/livetextadmin.js')}" />
+    <apex:sectionHeader title="{!$Label.AdminPageTitleLbl}" subtitle="{!$Label.AdminPgSubTitleLbl}"/>
+    <apex:includeScript value="{!URLFOR($Resource.LiveText, '/js/libphonenumber.js')}" />
+ 	<apex:includeScript value="{!URLFOR($Resource.LiveText, '/js/livetextglobal.js')}" />
+    <style>
+        .verticalSpacer{height:5px;width:1px;}
+    </style>
+    <script type="text/javascript">   
+        function enableSound() {
+            disconnectSoundEnabled = false;
+            if(j$('[id$=soundEnbBox]').is(":checked")) {
+                j$('[id$=soundEnbBox]').prop('checked',true); 
+                disconnectSoundEnabled = true;
+            }
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.LiveTextAdminController.enableAlertSound}',disconnectSoundEnabled,
+                function(result, event) {
+                }
+            ); 
+        }
+
+        function fillFormattedHiddenField(){
+            j$('[id$=formattedPhoneInputHidden]').val(formatLTNumber());
+        }
+
+        function formatLTNumber(){
+            var phone = j$('[id$=phoneNumberInput]').val();
+            var phoneStartsWithPlus = false;
+            var phoneUtil = i18n.phonenumbers.PhoneNumberUtil.getInstance();
+            if(!phone){
+                return null;
+            }
+            if(phone.startsWith('+')){
+                phoneStartsWithPlus = true;
+            }
+            phone = phone.replace(/\D/g,'');
+            if(phone.length == 5 || phone.length == 6){
+                console.log('It\'s a shortcode.');
+                j$('[id$=ltNumberCountryIsoCodeInputHidden]').val('US'); // Only US shortcodes are supported for now
+                //phone = phoneStartsWithPlus ? '+' + phone : phone;
+                j$('[id$=ltNumberphoneNumberInputHidden]').val(phone);
+                showPhoneErrorMessage('phoneValid', phone, phone);
+                return phone;
+            }
+            if(phone.length < 10 || phone.length > 17){
+                console.log('Invalid phone length');
+                phone = phoneStartsWithPlus ? '+' + phone : phone;
+                showPhoneErrorMessage('phoneInvalidLength', phone, phone);
+                j$('[id$=ltNumberphoneNumberInputHidden]').val(phone);
+                return phone;
+            }
+           
+            phone = '+' + phone;
+            var number;
+         	try{
+             	number = phoneUtil.parseAndKeepRawInput(phone);
+          	}catch(err){
+            	console.log('\'Number\' cannot be created');
+                showPhoneErrorMessage('phoneNotValid', phone, phone);
+                j$('[id$=ltNumberphoneNumberInputHidden]').val(phone);
+                return phone;
+          	}
+            if(phoneUtil.isValidNumber(number)){
+                j$('[id$=ltNumberCountryIsoCodeInputHidden]').val(phoneUtil.getRegionCodeForNumber(number));
+                var retPhone = phoneUtil.format(number, i18n.phonenumbers.PhoneNumberFormat.INTERNATIONAL);
+                var e164phone = phoneUtil.format(number, i18n.phonenumbers.PhoneNumberFormat.E164);
+                j$('[id$=ltNumberphoneNumberInputHidden]').val(e164phone);
+                showPhoneErrorMessage('phoneValid', retPhone, e164phone);
+                return retPhone;
+            }else{
+                console.log('Phone is not valid');
+                showPhoneErrorMessage('phoneNotValid', phone, phone);
+                j$('[id$=ltNumberphoneNumberInputHidden]').val(phone);
+                return phone;
+            }
+        }
+    </script>
+    <apex:form id="heywire_adminForm">
+        <apex:actionPoller action="{!connectedToHeywire}"
+            reRender="heywire_adminForm" interval="5"
+            rendered="{!checkConnectionStatus}" />
+        <apex:pageBlock mode="edit" id="heywire_ConfigureBlock"
+            rendered="{!NOT(displayComponent)}">
+            <apex:inputHidden value="{!oAuthURL}" id="oAuthURL" />
+            <apex:pageMessages id="heywire_pageMessages" rendered="{!displayMessagesOnTop}" />
+            <apex:pageBlockButtons location="top">
+                <apex:commandButton id="connectRefreshConnection"
+                    value="{!IF(connectionStatus != null, $Label.RefreshConnectionBtn, $Label.ConnectBtn)}"
+                    action="{!connect}" rerender="heywire_adminForm"
+                    oncomplete="openoAuthWindow();" />
+            </apex:pageBlockButtons>
+            <apex:pageBlockSection columns="1"
+                title="{!$Label.AccountDetailPBTitle}">
+                <apex:pageBlockSectionItem rendered="{!isConfigureUrls}">
+                    <apex:outputLabel id="enterHeywireEndpointInput"
+                        for="heywireEndpointInput" value="{!$Label.EndpointUrlInput}" />
+                    <apex:outputPanel styleClass="requiredInput" layout="block">
+                        <apex:outputPanel styleClass="requiredBlock" layout="block" />
+                        <apex:inputText id="heywireEndpointInput" size="40"
+                            styleClass="requiredInput" maxLength="255"
+                            value="{!configSettingsObj.Endpoint_URL__c}" />
+                    </apex:outputPanel>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem rendered="{!isConfigureUrls}">
+                    <apex:outputLabel id="enterHeywireOAuthEndpointInput"
+                        for="heywireOAuthEndpointInput" value="{!$Label.OAuthUrlInput}" />
+                    <apex:outputPanel styleClass="requiredInput" layout="block">
+                        <apex:outputPanel styleClass="requiredBlock" layout="block" />
+                        <apex:inputText id="heywireOAuthEndpointInput" size="40"
+                            styleClass="requiredInput" maxLength="255"
+                            value="{!configSettingsObj.oAuth_URL__c}" />
+                    </apex:outputPanel>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem helpText="{!$Label.OAuthServerTooltip}" rendered="{!IF(connectionStatus != null && NOT(displayComponent) 
+                                                                                            && configSettingsObj != null && configSettingsObj.Is_Valid_Credentials__c, false, true)}">
+                    <apex:outputLabel id="OAuthServerLabel" value="{!$Label.OAuthServerLabel}" for="liveTextServerPickList"/>
+                    <apex:outputPanel styleClass="requiredInput" layout="block">
+                        <apex:outputPanel styleClass="requiredBlock" layout="block" />
+                        <apex:selectList id="liveTextServerPickList" multiselect="false" size="1" value="{!liveTextServer}">
+                            <apex:selectOptions value="{!liveTextServerPickList}"/>
+                        </apex:selectList>
+                    </apex:outputPanel>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem helpText="{!$ObjectType.ConfigurationSettings__c.Fields.Account_Id__c.inlineHelpText}">
+                    <apex:outputLabel id="enterHeywireAccountIdInput"
+                        for="heywireAccountIdInput" value="{!$Label.AccountIdInput}" />
+                    <apex:outputPanel styleClass="requiredInput" layout="block">
+                        <apex:outputPanel styleClass="requiredBlock" layout="block" />
+                        <apex:inputText id="heywireAccountIdInput" size="40"
+                            styleClass="requiredInput" maxLength="80"
+                            value="{!configSettingsObj.Account_Id__c}" />
+                    </apex:outputPanel>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem helpText="{!$ObjectType.ConfigurationSettings__c.Fields.Auth_Token__c.inlineHelpText}">
+                    <apex:outputLabel id="enterAuthTokenInput" for="authTokenInput"
+                        value="{!$Label.OAuthTokenInput}" />
+                    <apex:outputPanel styleClass="requiredInput" layout="block">
+                        <apex:outputPanel styleClass="requiredBlock" layout="block" />
+                        <apex:inputSecret id="authTokenInput" size="40" maxLength="80"
+                            value="{!configSettingsObj.Auth_Token__c}" />
+                    </apex:outputPanel>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem helpText="{!$Label.ConnectedByHelpTxtLbl}" rendered="{!connectionStatus != null}">
+                    <apex:outputLabel value="{!$Label.ConnectedByLbl}" />
+                    <apex:outputPanel >
+                        <apex:outputField value="{!connectionStatus.LastModifiedById}" />
+                        <span style="padding-right: 5px">,</span>
+                        <apex:outputField value="{!connectionStatus.LastModifiedDate}" />
+                    </apex:outputPanel>
+                </apex:pageBlockSectionItem>
+            </apex:pageBlockSection>
+            <apex:pageBlockSection columns="1" title="{!$Label.BasicInfoTitle}">
+                <apex:pageBlockSectionItem helpText="{!$ObjectType.ConfigurationSettings__c.Fields.Disconnect_Sound_Enabled__c.inlineHelpText}">
+                    <apex:outputLabel id="soundEnb" value="{!$Label.DisconnectSoundEnabledLbl}"/>
+                    <apex:outputPanel id="soundEnbPanel">
+                        <apex:inputCheckbox value="{!disconnectSoundEnabled}" id="soundEnbBox" onclick="enableSound()"/>
+                    </apex:outputPanel>
+                </apex:pageBlockSectionItem>
+            </apex:pageBlockSection>
+        </apex:pageBlock>
+        <apex:actionFunction action="{!showPhoneErrorMessage}"
+            name="showPhoneErrorMessage" reRender="heywire_adminForm">
+            <apex:param name="message" assignTo="{!phoneErrorMessage}" value=""/>
+            <apex:param name="formattedPhone" assignTo="{!ltnObject.International_Live_Text_Number__c}" value=""/>
+            <apex:param name="phoneNumber" assignTo="{!phoneNumber}" value=""/>
+        </apex:actionFunction>
+        <apex:actionFunction action="{!deleteSupportNumber}"
+            name="delSupportNumberJS" reRender="heywire_adminForm">
+            <apex:param name="supportNoId" assignTo="{!selectedLtnId}" value="" />
+        </apex:actionFunction>
+        <apex:actionFunction action="{!editSupportNumber}"
+            name="editSupportNumberJS" reRender="heywire_adminForm" oncomplete="fillFormattedHiddenField();">
+            <apex:param name="supportNoId" assignTo="{!selectedLtnId}" value="" />
+        </apex:actionFunction>
+        <apex:pageBlock mode="edit" id="heywire_SupportNoBlock"
+            rendered="{!IF(connectionStatus != null && NOT(displayComponent) 
+                        && configSettingsObj != null && configSettingsObj.Is_Valid_Credentials__c, 
+                        true, false)}">
+            <apex:pageMessages rendered="{!NOT(displayMessagesOnTop)}" />
+            <apex:pageBlockButtons location="top">
+                <apex:commandButton id="addSupportNoBtn"
+                    value="{!$Label.AddSupportNoBtn}" action="{!addSupportNumber}" />
+            </apex:pageBlockButtons>
+            <apex:pageBlockSection columns="1"
+                title="{!$Label.SupportNumberConfLbl}">
+                <apex:pageblockTable value="{!sObjList}" var="sObj"
+                    id="pbtLiveTextNumbers">
+                    <apex:column headerValue="{!$Label.ActionLbl}">
+                        <apex:commandLink value="{!$Label.EditActionLbl}"
+                            onclick="editSupportNumberJS('{!sObj['Id']}'); return false;">
+                        </apex:commandLink>&nbsp;|&nbsp;
+                        <apex:commandLink value="{!$Label.DeleteActionLbl}"
+                            onclick="deleteSupportNumber('{!sObj['Id']}'); return false;">
+                        </apex:commandLink>
+                    </apex:column>
+                    <apex:column headerValue="{!$Label.NameLbl}">
+                        <apex:outputField value="{!sObj['Name']}" />
+                    </apex:column>
+                    <apex:column headerValue="{!$Label.SupportNumberLbl}">
+                        <apex:outputField value="{!sObj.Formatted_Support_Number__c}" />
+                    </apex:column>
+                    <apex:column headerValue="{!$Label.LastModifiedByLbl}">
+                        <apex:outputField value="{!sObj.LastModifiedById}" />
+                    </apex:column>
+                    <apex:column headerValue="{!$Label.LastModifiedDateLbl}">
+                        <apex:outputField value="{!sObj.LastModifiedDate}" />
+                    </apex:column>
+                    <apex:column headerValue="{!$Label.ValidatedLbl}">
+                        <apex:image value="/img/func_icons/remove12_on.gif" width="15"
+                            height="15" rendered="{!NOT(sObj['Validated__c'])}" />
+                        <apex:image value="/img/msg_icons/confirm16.gif" width="15"
+                            height="15" rendered="{!sObj.Validated__c}" />
+                    </apex:column>
+                </apex:pageblockTable>
+            </apex:pageBlockSection>
+        </apex:pageBlock>
+        <apex:pageBlock title="{!$Label.NumberConfSettingLbl}" mode="edit"
+            id="heywire_SupportNoDetailBlock" rendered="{!displayComponent}">
+            <apex:actionFunction action="{!moveToRight}" name="moveToRightJS"
+                reRender="assignUsersSection" />
+            <apex:actionFunction action="{!moveToLeft}" name="moveToLeftJS"
+                reRender="assignUsersSection" />
+            <apex:actionFunction action="{!searchUsers}" name="searchUsersJS"
+                reRender="assignUsersSection" />
+            <apex:actionFunction action="{!moveSPRecordTypeToRight}" name="moveSPRecordTypeToRightJS"
+                reRender="screenPopOptionsSection" />
+            <apex:actionFunction action="{!moveSPRecordTypeToLeft}" name="moveSPRecordTypeToLeftJS"
+                reRender="screenPopOptionsSection" />
+            <apex:actionFunction action="{!moveSPRecordTypeUp}" name="moveSPRecordTypeUpJS"
+                reRender="screenPopOptionsSection" />
+            <apex:actionFunction action="{!moveSPRecordTypeDown}" name="moveSPRecordTypeDownJS"
+                reRender="screenPopOptionsSection" />
+            <apex:actionFunction action="{!moveALRecordTypeToRight}" name="moveALRecordTypeToRightJS"
+                reRender="workspaceOptionsSection" />
+            <apex:actionFunction action="{!moveALRecordTypeToLeft}" name="moveALRecordTypeToLeftJS"
+                reRender="workspaceOptionsSection" />
+            <apex:pageMessages rendered="{!NOT(displayMessagesOnTop)}" id="heywire_SupportNoDetailBlock_messages" />
+            <apex:pageBlockButtons location="both">
+                <apex:commandButton id="saveSuppotNoBtn" value="{!$Label.SaveBtn}"
+                    action="{!save}"/>
+                <apex:commandButton id="cancelBtn" value="{!$Label.CancelBtn}"
+                    action="{!cancel}" />
+            </apex:pageBlockButtons>
+            <apex:pageBlockSection columns="2"
+                title="{!$Label.BasicInformationLbl}">
+                <apex:pageBlockSectionItem helpText="{!$ObjectType.LiveText_Number__c.Fields.Number__c.inlineHelpText}">
+                    <apex:outputLabel id="phoneNumberInputLbl" for="phoneNumberInput"
+                        value="{!$Label.PhoneNumberLbl}" />
+                    <apex:outputPanel styleClass="requiredInput" layout="block">
+                        <apex:outputPanel styleClass="requiredBlock" layout="block" />
+                        <apex:inputText id="phoneNumberInput" size="40" maxlength="18"
+                            value="{!phoneNumber}"
+                            disabled="{!ltnObject.Validated__c}" 
+                            onchange="fillFormattedHiddenField();"/> 
+                        <apex:inputHidden id="formattedPhoneInputHidden" value="{!ltnObject.International_Live_Text_Number__c}"/>
+                        <apex:inputHidden id="ltNumberCountryIsoCodeInputHidden" value="{!ltnObject.ISOCountryCode__c}"/>
+                        <apex:inputHidden id="ltNumberphoneNumberInputHidden" value="{!ltnObject.Number__c}"/>
+                    </apex:outputPanel>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem helpText="{!$ObjectType.LiveText_Number__c.Fields.Validated__c.inlineHelpText}">
+                    <apex:outputLabel id="validatedLbl" for="validatedImg"
+                        value="{!$Label.ValidatedLbl}" />
+                    <apex:image value="{!IF(ltnObject.Validated__c, '/img/msg_icons/confirm16.gif', '/img/func_icons/remove12_on.gif')}"
+                        width="15" height="15" />
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem helpText="{!$Label.PhoneLabelHelpTextLbl}">
+                    <apex:outputLabel id="nameInputLbl" for="nameInput"
+                        value="{!$Label.NameLabelLbl}" />
+                    <apex:outputPanel styleClass="requiredInput" layout="block">
+                        <apex:outputPanel styleClass="requiredBlock" layout="block" />
+                        <apex:inputText id="nameInput" size="40" maxlength="80"
+                            value="{!ltnObject.Name}" />
+                    </apex:outputPanel>
+                </apex:pageBlockSectionItem>
+            </apex:pageBlockSection>
+            <apex:pageBlockSection columns="1" title="{!$Label.AutoResDetailLbl}" id="responseManagementSection">       
+                <apex:pageBlockSectionItem helpText="{!$ObjectType.LiveText_Number__c.Fields.Auto_Response_Message__c.inlineHelpText}">
+                    <apex:outputLabel id="autoRespMsgLbl" for="autoRespInput"
+                        value="{!$Label.AutoResponseMsgLbl}"/>
+                    <apex:inputTextarea id="autoRespInput"
+                        style="width:231px;height:50px;"
+                        value="{!ltnObject.Auto_Response_Message__c}">
+                    </apex:inputTextarea>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem helpText="{!$ObjectType.LiveText_Number__c.Fields.Initial_Message__c.inlineHelpText}">
+                    <apex:outputLabel id="initialMsgLbl" for="initialMsgInput"
+                        value="{!$Label.InitialMsgLbl}" />
+                    <apex:inputTextarea id="initialMsgInput"
+                        style="width:231px;height:50px;"
+                        value="{!ltnObject.Initial_Message__c}">
+                    </apex:inputTextarea>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem helpText="{!$ObjectType.LiveText_Number__c.Fields.Chat_End_Message__c.inlineHelpText}">
+                    <apex:outputLabel id="endChatInputLbl" for="endChatInput"
+                        value="{!$Label.ChatEndMsgLbl}" />
+                    <apex:inputTextarea id="endChatInput" 
+                        value="{!ltnObject.Chat_End_Message__c}"
+                        style="width:231px;height:50px;"></apex:inputTextarea>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem helpText="{!$ObjectType.LiveText_Number__c.Fields.No_Available_Users_Message__c.inlineHelpText}">
+                    <apex:outputLabel id="noAvailableUsersLbl" for="noAvailableUsersInput"
+                        value="{!$Label.NoAvailableUsersMsgLbl}" />
+                    <apex:inputTextarea id="noAvailableUsersInput"
+                        style="width:231px;height:50px;"
+                        value="{!ltnObject.No_Available_Users_Message__c}"></apex:inputTextarea>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem helpText="{!$ObjectType.LiveText_Number__c.Fields.Offline_Hours_Message__c.inlineHelpText}">
+                    <apex:outputLabel id="offlienHrsMsgLbl" for="offlineHrsInput"
+                        value="{!$Label.OfflineHrsMsgLbl}" />
+                    <apex:inputTextarea id="offlineHrsInput"
+                        style="width:231px;height:50px;"
+                        value="{!ltnObject.Offline_Hours_Message__c}"
+                        disabled="{!businessHours.size<=1}"></apex:inputTextarea>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem helpText="{!$ObjectType.LiveText_Number__c.Fields.Business_Hours__c.inlineHelpText}">
+                    <apex:outputLabel id="businessHrsLbl" for="businessHourList"
+                        value="{!$Label.BusinessHrsLbl}" />
+                    <apex:selectList id="businessHourList"
+                        value="{!selectedBusinessHour}" size="1"
+                        disabled="{!businessHours.size<=1}">
+                        <apex:actionSupport event="onchange" rerender="notifyUsersDuringOffHoursPanel"/>
+                        <apex:selectOptions value="{!businessHours}" />
+                    </apex:selectList>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem helpText="{!$ObjectType.LiveText_Number__c.Fields.Notify_Users_During_Off_Hours__c.inlineHelpText}">
+                    <apex:outputLabel id="notifyUsersDuringOffHoursLbl" for="notifyUsersDuringOffHoursCheckBox" 
+                        value="{!$ObjectType.LiveText_Number__c.Fields.Notify_Users_During_Off_Hours__c.Label}"/>
+                    <apex:outputPanel id="notifyUsersDuringOffHoursPanel">
+                        <apex:inputCheckbox value="{!notifyUsersDuringOffHours}" id="notifyUsersDuringOffHoursCheckBox" 
+                            disabled="{!IF(OR((selectedBusinessHour == 'None'),(selectedBusinessHour == '')),true, false)}"/>
+                    </apex:outputPanel>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem helpText="{!$ObjectType.LiveText_Number__c.Fields.Text_Session_Reuse_Time_seconds__c.inlineHelpText}">
+                    <apex:outputLabel id="textSessionReuseTimeInputLabel" for="textSessionReuseTimeInput"
+                            value="{!$ObjectType.LiveText_Number__c.Fields.Text_Session_Reuse_Time_seconds__c.Label}"/>
+                    <apex:inputText id="textSessionReuseTimeInput" size="20" maxlength="18"
+                            value="{!textSessionReuseTime}"/>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem helpText="{!$ObjectType.LiveText_Number__c.Fields.ITR_Enabled__c.inlineHelpText}">
+                    <apex:outputLabel id="itrEnabledLbl" for="itrEnabledCheckBox"
+                        value="{!$Label.ItrEnabledLbl}" />
+                    <apex:outputPanel id="itrEnabledPanel" layout="block" >
+                        <table cellpadding='0' cellspacing='0'>
+                            <tbody>
+                                <tr>
+                                    <td>
+                                        <apex:inputCheckbox value="{!isITREnabled}" id="itrEnabledCheckBox">
+                                            <apex:actionSupport event="onchange" rerender="responseManagementSection" />
+                                        </apex:inputCheckbox>
+                                    </td>
+                                    <td  style="background-color:yellow;">
+                                        <apex:outputPanel rendered="{!isITREnabled}" layout="inline" >  
+                                            <b><span style='padding:5px;'>Warning:</span> </b><apex:outputLabel value="{!$Label.ItrEnabledWarning}"  />&nbsp;<a href='http://www.heywire.com/resources/' target='_blank'>http://www.heywire.com/resources/</a>&nbsp;(Documentation tab)&nbsp;
+                                        </apex:outputPanel>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </apex:outputPanel>         
+                </apex:pageBlockSectionItem>
+            </apex:pageBlockSection>
+            <apex:pageBlockSection columns="1" title="{!$Label.AssignUserLbl}"
+                id="assignUsersSection">
+                <apex:pageBlockSectionItem helpText="{!$Label.AssignUsersDescLbl}">
+                    <apex:outputLabel id="assignUsersHeaderLbl" for="assignUsersPanel"  value="{!$Label.AssignLbl}" />
+                        <apex:outputPanel id="assignUsersPanel" layout="block">
+                            <apex:outputPanel id="searchUserPanel" layout="block">
+                                <apex:outputLabel id="searchLbl" for="searchUsersList" value="{!$Label.SearchLbl}" />
+                                <apex:selectList id="searchTypeList" value="{!selectedSearchType}" size="1">
+                                    <apex:selectOptions value="{!searchTypeList}" />
+                                </apex:selectList>
+                                <apex:outputLabel id="searchTextLabel" for="searchTextInput" value="{!$Label.ForLbl}" />
+                                <apex:inputtext id="searchTextInput" value="{!searchUserName}" />
+                                <apex:commandButton id="searchUserBtn" value="{!$Label.FindBtn}" onclick="searchUsersJS(); return false;" />
+                            </apex:outputPanel> 
+                            <table class="layout">
+                                <tbody>
+                                    <tr>
+                                        <td><apex:image value="/s.gif" styleClass="verticalSpacer" /></td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <apex:outputPanel id="multiselectPanel" layout="block"
+                                                styleClass="duelingListBox">
+                                                <table class="layout">
+                                                    <tbody>
+                                                        <tr>
+                                                            <td class="selectCell"><apex:outputPanel layout="block"
+                                                                    styleClass="selectTitle">
+                                                                    <apex:outputLabel value="{!$Label.AvailableMembersLbl}"
+                                                                        for="availableMemberPicklist" />
+                                                                </apex:outputPanel> <apex:selectList id="availableMemberPicklist"
+                                                                    multiselect="true" value="{!availableMembersList}" size="15">
+                                                                    <apex:selectOptions value="{!availableMembers}" />
+                                                                </apex:selectList></td>
+                                                            <td class="buttonCell"><apex:outputPanel layout="block"
+                                                                    styleClass="text">{!$Label.AddLbl}</apex:outputPanel> <apex:outputPanel layout="block" styleClass="text">
+                                                                    <apex:commandLink onclick="moveToRightJS(); return false;">
+                                                                        <apex:image value="/s.gif" styleClass="rightArrowIcon" />
+                                                                    </apex:commandLink>
+                                                                </apex:outputPanel> <apex:outputPanel layout="block" styleClass="text">
+                                                                    <apex:commandLink onclick="moveToLeftJS(); return false;">
+                                                                        <apex:image value="/s.gif" styleClass="leftArrowIcon" />
+                                                                    </apex:commandLink>
+                                                                </apex:outputPanel> <apex:outputPanel layout="block" styleClass="duelingText">{!$Label.RemoveLbl}</apex:outputPanel>
+                                                            </td>
+                                                            <td class="selectCell">
+                                                                <apex:outputPanel layout="block"
+                                                                    styleClass="selectTitle">
+                                                                    <apex:outputLabel value="{!$Label.SelectedMembersLbl}"
+                                                                        for="selectedMemberPicklist" />
+                                                                </apex:outputPanel> <apex:selectList id="selectedMemberPicklist"
+                                                                    multiselect="true" size="15" value="{!selectedMembersList}">
+                                                                    <apex:selectOptions value="{!selectedMembers}" />
+                                                                </apex:selectList>
+                                                            </td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </apex:outputPanel>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>                
+                        </apex:outputPanel>
+                    </apex:pageBlockSectionItem>
+                </apex:pageBlockSection>
+                
+                <apex:pageBlockSection columns="1" title="{!$Label.ScreenPopOptionsLbl}" id="screenPopOptionsSection">
+                    <apex:pageBlockSectionItem helpText="{!$Label.ScreenPopWithRecordsDescriptionLbl}">
+                        <apex:outputLabel id="screenPopHeaderRecordsLbl" for="screenPopRocordsMultiselectPanel" value="{!$Label.ScreenPopWithRecordsLbl}" />
+                        <apex:outputPanel id="screenPopRocordsMultiselectPanel" layout="block" styleClass="duelingListBox">
+                            <apex:outputLabel id="screenPopHeaderRecordsDescLbl" value="{!$Label.ScreenPopWithRecordsHeaderLbl}" />     
+                            <table class="layout">
+                                <tbody>
+                                    <tr>
+                                        <td colspan='4'><apex:image value="/s.gif" styleClass="verticalSpacer" /></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="selectCell">
+                                            <apex:outputPanel layout="block" styleClass="selectTitle">
+                                                <apex:outputLabel value="{!$Label.AvailableRecordTypesLbl}"
+                                                    for="availableRecordTypesPicklist" />
+                                            </apex:outputPanel> 
+                                            <apex:selectList id="availableRecordTypesPicklist"
+                                                multiselect="true" value="{!screenPopAvailableRecordTypesList}" size="8">
+                                                <apex:selectOptions value="{!screenPopAvailableRecordTypes}" />
+                                            </apex:selectList>
+                                        </td>
+                                        <td class="buttonCell">
+                                            <apex:outputPanel layout="block"
+                                                styleClass="text">{!$Label.AddLbl}
+                                            </apex:outputPanel>
+                                            <apex:outputPanel layout="block" styleClass="text">
+                                                <apex:commandLink onclick="moveSPRecordTypeToRightJS(); return false;">
+                                                    <apex:image value="/s.gif" styleClass="rightArrowIcon" />
+                                                </apex:commandLink>
+                                            </apex:outputPanel> 
+                                            <apex:outputPanel layout="block" styleClass="text">
+                                                <apex:commandLink onclick="moveSPRecordTypeToLeftJS(); return false;">
+                                                    <apex:image value="/s.gif" styleClass="leftArrowIcon" />
+                                                </apex:commandLink>
+                                            </apex:outputPanel> 
+                                            <apex:outputPanel layout="block" styleClass="duelingText">{!$Label.RemoveLbl}</apex:outputPanel>
+                                        </td>
+                                        <td class="selectCell">
+                                            <apex:outputPanel layout="block" styleClass="selectTitle">
+                                                <apex:outputLabel value="{!$Label.SelectedRecordTypesLbl}"  for="selectedRecordTypesPicklist" />
+                                            </apex:outputPanel> 
+                                            <apex:selectList id="selectedRecordTypesPicklist" multiselect="true" size="8" value="{!screenPopSelectedRecordTypesList}">
+                                                <apex:selectOptions value="{!screenPopSelectedRecordTypes}" />
+                                            </apex:selectList>
+                                        </td>
+                                        <td class="buttonCell">
+                                            <apex:outputPanel layout="block" styleClass="text">
+                                                <apex:commandLink onclick="moveSPRecordTypeUpJS(); return false;">
+                                                    <apex:image value="/s.gif" styleClass="upArrowIcon" />
+                                                </apex:commandLink>
+                                            </apex:outputPanel> 
+                                            <apex:outputPanel layout="block" styleClass="text">
+                                                <apex:commandLink onclick="moveSPRecordTypeDownJS(); return false;">
+                                                    <apex:image value="/s.gif" styleClass="downArrowIcon" />
+                                                </apex:commandLink>
+                                            </apex:outputPanel> 
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </apex:outputPanel>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem >
+                    <apex:image value="/s.gif" width="1" height="10" />
+                </apex:pageBlockSectionItem>                                    
+                <apex:pageBlockSectionItem helpText="{!$Label.ScreenPopNoRecordsDescriptionLbl}">
+                    <apex:outputLabel id="screenPopHeaderNoRecordsLbl" for="screenPopNoRecordsSelectPanel"  value="{!$Label.ScreenPopNoRecordsLbl}" />
+                    <apex:outputPanel id="screenPopNoRecordsSelectPanel" layout="block" styleClass="duelingListBox">
+                        <apex:outputLabel id="screenPopHeaderNoRecordsDescLbl" value="{!$Label.ScreenPopNoRecordsHeaderLbl}" />
+                        <table class="layout">
+                            <tbody>
+                                <tr>
+                                    <td><apex:image value="/s.gif" styleClass="verticalSpacer" /></td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <apex:selectList id="screenPopNoRecordsList"
+                                            value="{!screenPopDefaultRecordType}" size="1"
+                                            disabled="{!defaultRecordTypes.size<=1}">
+                                            <apex:selectOptions value="{!defaultRecordTypes}" />
+                                        </apex:selectList>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>    
+                    </apex:outputPanel> 
+                </apex:pageBlockSectionItem>
+            </apex:pageBlockSection>
+                
+            <apex:pageBlockSection columns="1" title="{!$Label.TXT_Workspace_options}"  id="workspaceOptionsSection">           
+                <apex:pageBlockSectionItem helpText="{!$Label.AutoLinkingDescriptionLbl}">
+                    <apex:outputLabel id="screenPopHeaderNoRecordsLbl" for="autoLinkingSelectPanel" value="{!$Label.AutoLinkingLbl}" />
+                    <apex:outputPanel id="autoLinkingSelectPanel" layout="block" styleClass="duelingListBox">
+                        <apex:outputLabel id="autoLinkingHeaderDescLbl" value="{!$Label.AutoLinkingHeaderLbl}" />
+                        <table class="layout">
+                            <tbody>
+                                <tr>
+                                    <td colspan='3'><apex:image value="/s.gif" styleClass="verticalSpacer" /></td>
+                                </tr>
+                                <tr>
+                                    <td class="selectCell">
+                                        <apex:outputPanel layout="block" styleClass="selectTitle">
+                                            <apex:outputLabel value="{!$Label.AvailableRecordTypesLbl}"
+                                                for="autoLinkingAvailableRecordTypesPicklist" />
+                                        </apex:outputPanel> 
+                                        <apex:selectList id="autoLinkingAvailableRecordTypesPicklist"
+                                            multiselect="true" value="{!autoLinkingAvailableRecordTypesList}" size="8">
+                                            <apex:selectOptions value="{!autoLinkingAvailableRecordTypes}" />
+                                        </apex:selectList>
+                                    </td>
+                                    <td class="buttonCell">
+                                        <apex:outputPanel layout="block"
+                                            styleClass="text">{!$Label.AddLbl}
+                                        </apex:outputPanel>
+                                        <apex:outputPanel layout="block" styleClass="text">
+                                            <apex:commandLink onclick="moveALRecordTypeToRightJS(); return false;">
+                                                <apex:image value="/s.gif" styleClass="rightArrowIcon" />
+                                            </apex:commandLink>
+                                        </apex:outputPanel> 
+                                        <apex:outputPanel layout="block" styleClass="text">
+                                            <apex:commandLink onclick="moveALRecordTypeToLeftJS(); return false;">
+                                                <apex:image value="/s.gif" styleClass="leftArrowIcon" />
+                                            </apex:commandLink>
+                                        </apex:outputPanel> 
+                                        <apex:outputPanel layout="block" styleClass="duelingText">{!$Label.RemoveLbl}</apex:outputPanel>
+                                    </td>
+                                    <td class="selectCell">
+                                        <apex:outputPanel layout="block" styleClass="selectTitle">
+                                            <apex:outputLabel value="{!$Label.SelectedRecordTypesLbl}"  for="autoLinkingSelectedRecordTypesPicklist" />
+                                        </apex:outputPanel> 
+                                        <apex:selectList id="autoLinkingSelectedRecordTypesPicklist" multiselect="true" size="8" value="{!autoLinkingSelectedRecordTypesList}">
+                                            <apex:selectOptions value="{!autoLinkingSelectedRecordTypes}" />
+                                        </apex:selectList>
+                                    </td>
+                                    
+                                </tr>
+                            </tbody>
+                        </table>        
+                    </apex:outputPanel>
+                </apex:pageBlockSectionItem>        
+                        
+                <apex:pageBlockSectionItem >
+                    <apex:image value="/s.gif" styleClass="verticalSpacer" />   
+                </apex:pageBlockSectionItem>
+                
+                <apex:pageBlockSectionItem helpText="{!$Label.AllowNewLblHelp}">
+                    <apex:outputLabel id="subtabsHeaderLbl" for="subtabsSelectPanel" value="{!$Label.NewTabsLbl}" />
+                    <apex:outputPanel id="subtabsSelectPanel" layout="block">
+                        <apex:outputLabel id="subtabsHeaderDescLbl" value="{!$Label.NewTabsHeaderLbl}" />
+                        <table class="layout">
+                            <tbody>
+                                <tr>
+                                    <td><apex:image value="/s.gif" styleClass="verticalSpacer" /></td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <apex:selectCheckboxes value="{!selectedNewTabs}" id="newItemsCheckBoxes" layout="pageDirection">
+                                            <apex:selectOptions value="{!newTabOptions}"/>
+                                        </apex:selectCheckboxes>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>                        
+                    </apex:outputPanel>
+                </apex:pageBlockSectionItem>
+
+                <apex:pageBlockSectionItem helpText="{!$ObjectType.LiveText_Number__c.Fields.Critical_Alert_Time__c.inlineHelpText}">
+                    <apex:outputLabel id="timeoutInputLabel" for="timeoutInput"
+                            value="{!$ObjectType.LiveText_Number__c.Fields.Critical_Alert_Time__c.Label}"/>
+                    <apex:inputText id="timeoutInput" size="20" maxlength="18"
+                            value="{!criticalAlertTime}"/>
+                </apex:pageBlockSectionItem>
+                
+                <apex:pageBlockSectionItem helpText="{!$Label.CountryCodesDescriptionLbl}">
+                    <apex:outputLabel id="countryCodesHeaderLbl" for="countryCodesSelectPanel" value="{!$Label.CountryCodesLbl}" />
+                    <apex:outputPanel id="countryCodesSelectPanel" layout="block" style="margin-left:10px;">
+                        <apex:inputCheckbox value="{!isPrependCountryCode}" id="prependCountryCodeCheckBox" />      
+                        <apex:outputLabel value="{!$Label.CountryCodesHeaderLbl}" />
+                    </apex:outputPanel>     
+                </apex:pageBlockSectionItem>
+
+            </apex:pageBlockSection>
+            <apex:pageBlockSection id="transcriptOptions" columns="1" title="{!$Label.TXT_Transcript_options}">
+                <apex:pageBlockSectionItem helpText="{!$Label.CreateActivityRecordsLbl}">
+                    <apex:outputLabel id="createActivityRecordsLabel" for="createActivityRecordsPanel" value="{!$Label.CreateActivityLbl}"/>
+                    <apex:outputPanel id="createActivityRecordsPanel" layout="block">
+                        <apex:outputLabel id="createActivityHeaderLbl" value="{!$Label.CreateActivityHeaderLbl}"/>
+                        <table>
+                            <tr>
+                                <td><apex:image value="/s.gif" styleClass="verticalSpacer" /></td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <apex:selectCheckboxes value="{!selectedCreateActivityItems}" id="createActivityCheckBoxes" layout="pageDirection">
+                                        <apex:selectOptions value="{!createActivityItemsOptions}"/>
+                                    </apex:selectCheckboxes>
+                                </td>
+                            </tr>
+                        </table>
+                    </apex:outputPanel>
+                </apex:pageBlockSectionItem>    
+            </apex:pageBlockSection>
+        </apex:pageBlock>
+    </apex:form>
+</apex:page>

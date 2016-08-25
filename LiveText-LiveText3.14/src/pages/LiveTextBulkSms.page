@@ -1,0 +1,502 @@
+<apex:page showHeader="true" sidebar="true" standardController="Conversation_Session__c" extensions="LiveTextBulkSmsController">
+<html xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<apex:stylesheet value="{!URLFOR($Resource.SLDS202, 'assets/styles/salesforce-lightning-design-system-vf.css')}" />
+<apex:includeScript value="{!URLFOR($Resource.LiveText, '/jquery/jquery-1.10.2.js')}" />
+<apex:includeScript value="{!URLFOR($Resource.LiveText, '/js/tooltip.js')}" />
+<apex:includeScript value="/soap/ajax/36.0/connection.js"/>
+<apex:includeScript value="/support/console/36.0/integration.js"/>
+<apex:includeScript value="{!URLFOR($Resource.LiveText, '/js/libphonenumber.js')}" />
+<apex:includeScript value="{!URLFOR($Resource.LiveText, '/js/livetextglobal.js')}" />
+<script>    
+sforce.connection.sessionId = '{!$Api.Session_ID}';
+
+var j$ = jQuery.noConflict();
+
+var activeLiveTextNumberId;
+var recordsNumberLimit;
+var numberStatuses;
+var recordIdToPhoneNumber = {};
+var storageId = getURLParameter('storageId');
+var recordType = getURLParameter('recordType');
+var liveTextNumberIds = new Array();
+var done = false;
+var locale = '{!locale}';
+var userList = [];
+
+function getURLParameter(name) {
+  return decodeURIComponent((new RegExp('[?|&]' + name + '=' + '([^&;]+?)(&|#|;|$)').exec(location.search) || [null, ''])[1].replace(/\+/g, '%20')) || null;
+}
+
+function closeSubtab(result) {
+    var tabId = result.id;
+    sforce.console.closeTab(tabId);
+};
+
+function deleteStorage(callback){
+    Visualforce.remoting.Manager.invokeAction(
+    '{!$RemoteAction.LiveTextBulkSmsController.deleteStorageRecord}',
+    storageId,
+    callback);
+}
+
+function onBeforeunLoadHanlder(e){
+    if(done=='false' || done == false){
+        var dialogText = '{!$Label.BulkBeforeUnload}', e = e || window.event;
+        if(e){
+            e.returnValue = dialogText;
+        }
+        return dialogText;
+    }
+};
+function onUnloadHandler(){
+    if(done=='false' || done == false){
+        var delResult = sforce.connection.deleteIds([storageId]);
+    }
+}
+function removeOnunloadEvents(){
+    deleteStorage(function(){
+        sforce.console.setTabUnsavedChanges(false);
+        window.removeEventListener('beforeunload', onBeforeunLoadHanlder, false);
+        window.removeEventListener('unload', onUnloadHandler, false);
+    });
+}
+
+function showInfoPanel(titleMessage, theme){
+    j$('#titleInfoPanel').html(titleMessage);
+    if(theme === 'error'){
+        j$('#informationPanel').removeClass('slds-theme--info').removeClass('slds-theme--warning').removeClass('slds-theme--success').addClass('slds-theme--error');
+        j$('#infoIcon').hide();
+        j$('#warningIcon').hide();
+        j$('#successIcon').hide();
+        j$('#errorIcon').show();
+    }else if(theme === 'info'){
+        j$('#informationPanel').removeClass('slds-theme--error').removeClass('slds-theme--warning').removeClass('slds-theme--success').addClass('slds-theme--info');
+        j$('#errorIcon').hide();
+        j$('#warningIcon').hide();
+        j$('#successIcon').hide();
+        j$('#infoIcon').show();
+    }else if(theme === 'warning'){
+        j$('#informationPanel').removeClass('slds-theme--error').removeClass('slds-theme--info').removeClass('slds-theme--success').addClass('slds-theme--warning');
+        j$('#errorIcon').hide();
+        j$('#infoIcon').hide();
+        j$('#successIcon').hide();
+        j$('#warningIcon').show();
+    }else if(theme === 'success'){
+        j$('#informationPanel').removeClass('slds-theme--error').removeClass('slds-theme--warning').removeClass('slds-theme--info').addClass('slds-theme--success');
+        j$('#errorIcon').hide();
+        j$('#infoIcon').hide();
+        j$('#warningIcon').hide();
+        j$('#successIcon').show();
+    }
+    j$('#informationPanel').show();
+}
+
+function loadingValidation(){
+    Visualforce.remoting.Manager.invokeAction(
+        '{!$RemoteAction.LiveTextBulkSmsController.loadingValidation}',
+        recordsNumberLimit,
+        numberStatuses,
+        function(result, event){
+      if(event.status && result != null){
+                j$.each(JSON.parse(result), function(key, value){
+                    showInfoPanel(value[0], key);
+                });
+                j$('#spinner').hide();
+            }
+      else{
+      	j$('#spinner').hide();
+      }
+        },
+    {escape: false});
+  }
+
+
+j$(document).ready(function(){
+    function init(){
+        j$('#spinner').show();
+        var callbacks = new Array();
+        callbacks.push(getNumberStatuses);
+        callbacks.push(getOwnersLocaleMap);
+        getRecipients(callbacks);
+        callbacks = new Array();
+        callbacks.push(getActivePhoneNumberId);
+        var childCallbacks = new Array();
+        childCallbacks.push(getRecordsLimit);
+        getPhoneNumbersId(callbacks,childCallbacks);
+    }
+
+    function getRecipients(callbacks){
+        Visualforce.remoting.Manager.invokeAction(
+            '{!$RemoteAction.LiveTextBulkSmsController.getRecipients}',
+            storageId,
+            function(result, event){
+                var recipients;
+                if(event.status){
+                    recipients = JSON.parse(result);
+                    if(recipients){
+                        for(var key in recipients){
+                            if(recipients.hasOwnProperty(key)){
+                                userList.push(recipients[key].ownerId);
+                            }
+                        }
+                    }
+                }
+                for(var i = 0; i < callbacks.length; i++){
+                    if(callbacks[i] && typeof callbacks[i] == "function") {
+                        callbacks[i](recipients);
+                    }
+                }
+            },
+        {escape: false});
+    }
+
+    function getOwnersLocaleMap(recipients){
+        var ownerIdToRecipientRecord = {};
+        var ownerIdToRecipientKey = {};
+        for(var key in recipients){
+            if(recipients.hasOwnProperty(key)){
+                var temp = recipients[key].ownerId;
+                ownerIdToRecipientRecord[temp] = recipients[key];
+                ownerIdToRecipientKey[temp] = key;
+            }
+        }
+        Visualforce.remoting.Manager.invokeAction(
+            '{!$RemoteAction.LiveTextBulkSmsController.getOwnersLocaleMap}',
+            userList,
+            function(result, event){
+                var ownersMap;
+                if(event.status){
+                    ownersMap = JSON.parse(result);
+                    if(ownersMap){
+                         for(var key in ownersMap){
+                            if(ownersMap.hasOwnProperty(key) && ownerIdToRecipientRecord.hasOwnProperty(key)){
+                                var recipientPhone = phoneE164Formatter(ownerIdToRecipientRecord[key].phone, ownersMap[key]);
+                                recordIdToPhoneNumber[ownerIdToRecipientKey[key]] = recipientPhone;
+                            }
+                        }
+                    }
+                }
+                for(var key in recipients){
+                    if(!recordIdToPhoneNumber.hasOwnProperty(key)){
+                        recordIdToPhoneNumber[key] = phoneE164Formatter(recipients[key].phone, recipients[key].locale);
+                    }
+                }
+            },
+        {escape: false});
+    }
+
+    function phoneE164Formatter(phone, locale){
+        var userLocale = locale;
+        userLocale = userLocale.search("_") ? userLocale.substring(userLocale.lastIndexOf("_")+1) : userLocale;
+        var phoneUtil = i18n.phonenumbers.PhoneNumberUtil.getInstance();
+        var num;
+        var phoneStartsWithPlus = false;
+        if(phone.startsWith('+'))
+            phoneStartsWithPlus = true;
+        phone = phone.replace(/\D/g,'');
+        if(userLocale == "US" && phone.length == 11 && phone.startsWith("1") && !phoneStartsWithPlus){
+            try{
+                num = phoneUtil.parseAndKeepRawInput("+" + phone);
+            }catch(err){
+                console.log('its not an US number');
+            }
+        }
+        phone = phoneStartsWithPlus ? "+" + phone : phone;
+        if(!num){
+            try{
+                num = phoneStartsWithPlus ? phoneUtil.parseAndKeepRawInput(phone) : phoneUtil.parseAndKeepRawInput(phone, userLocale); 
+            }catch(err){
+                return phone;
+            }
+        }
+        return phoneUtil.format(num, i18n.phonenumbers.PhoneNumberFormat.E164);
+     }
+
+    function getNumberStatuses(recipients){
+        Visualforce.remoting.Manager.invokeAction(
+            '{!$RemoteAction.LiveTextBulkSmsController.getNumberStatuses}',
+            recipients,
+            function(result, event){
+                if(event.status){
+                    numberStatuses = JSON.parse(result);
+                }
+            },
+        {escape: false});
+    }
+
+    function getPhoneNumbersId(callbacks, childCallbacks){
+        Visualforce.remoting.Manager.invokeAction(
+            '{!$RemoteAction.LiveTextBulkSmsController.getPhoneNumbers}',
+            function(result, event){
+                if(event.status){
+                    getPhoneNumbersOption(result, function(resultOptions){
+                        j$('#phoneNumberSelect').append(resultOptions);
+                    });
+                    j$.each(JSON.parse(result), function(key, value){
+                        liveTextNumberIds.push(key);
+                    });
+                    for(var i = 0; i < callbacks.length; i++){
+                        if(callbacks[i] && typeof callbacks[i] == "function") {
+                            callbacks[i](liveTextNumberIds, childCallbacks);
+                        }
+                    }
+                }
+
+            },
+        {escape: false});
+    }
+
+    function getActivePhoneNumberId(liveTextNumberIds, callbacks){
+        Visualforce.remoting.Manager.invokeAction(
+            '{!$RemoteAction.LiveTextBulkSmsController.getActiveLiveTextNumberId}',
+            liveTextNumberIds,
+            function(result, event){
+                if(event.status){
+                    activeLiveTextNumberId = result;
+                    for(var i = 0; i < callbacks.length; i++){
+                        if(callbacks[i] && typeof callbacks[i] == "function") {
+                            callbacks[i](activeLiveTextNumberId);
+                        }
+                    }
+
+                }
+            },
+        {escape: false});
+    }
+
+    function getRecordsLimit(activeLiveTextNumberId){
+        Visualforce.remoting.Manager.invokeAction(
+            '{!$RemoteAction.LiveTextBulkSmsController.getRecordsNumberLimit}',
+            activeLiveTextNumberId,
+            function(result, event){
+                if(event.status){
+                    recordsNumberLimit = result;
+                }else{
+                    recordsNumberLimit = 0;
+                }
+                loadingValidation();
+            },
+        {escape: false});
+    }
+
+    function getPhoneNumbersOption(optionsMap, callback){
+        var htmlOptions = '<option selected="selected" value="notValid">{!$Label.BulkCampaignPhoneSelectDefault}</option>';
+        j$.each(JSON.parse(optionsMap), function(key, value){
+            htmlOptions += '<option id="'+key+'" value="'+key+'">'+value+'</option>';
+        });
+        callback( htmlOptions );
+    }
+
+    j$('#backToRequest').on('click', function(){
+        j$('#spinner').show();
+        j$('#insertDataPage').show();
+        j$('#confomrationOptions').hide();
+        j$('#informationPanel').hide();
+        loadingValidation();
+    });
+
+
+    j$('#messageTextArea').on('keyup', function(){
+        var cs = j$('#messageTextArea').val();
+        var inputLength = parseInt(utf8ByteLength(j$.trim(cs)));
+        j$("#characters").html(inputLength);
+        var messagesNumber = Math.ceil(inputLength / 160);
+        j$('#numberOfMessages').text('(' + messagesNumber + ')');
+    });
+
+    j$('#cancelRequest').on('click', function(){
+        if(confirm("{!$Label.BulkCloseWizard}")){
+            deleteStorage(function(){
+            removeOnunloadEvents();
+                if(sforce.console.isInConsole()) {
+                    sforce.console.setTabUnsavedChanges(false);
+                    sforce.console.getEnclosingTabId(closeSubtab);
+                }else{
+                    window.history.back();
+                }
+            });
+        }
+    });
+
+    j$('#sendRequest').on('click', function(){
+        if(j$('#phoneNumberSelect').val() == 'notValid'){
+            showInfoPanel('{!$Label.BulkCampaignPhoneSelectDefaultError}', 'error');
+        }else{
+            activeLiveTextNumberId = j$('#phoneNumberSelect').val();
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.LiveTextBulkSmsController.smsTextValidation}',
+                recordsNumberLimit,
+                numberStatuses['recipients'],
+                j$('#messageTextArea').val(),
+                function(result, event){
+                    var isError = false;
+                    j$.each(JSON.parse(result), function(key, value){
+                        if(key == 'error'){
+                            isError = true;
+                        }
+                        showInfoPanel(value, key);
+                    });
+                    if(!isError){
+                        j$('#insertDataPage').hide();
+                        j$('#confomrationOptions').show();
+                    }
+                },
+            {escape: false});
+        }
+    });
+
+    j$('#confirmSending').on('click', function(){
+        j$('#spinner').show();
+        Visualforce.remoting.Manager.invokeAction(
+        '{!$RemoteAction.LiveTextBulkSmsController.sendSMSToList}',
+            storageId,
+            activeLiveTextNumberId,
+            recordIdToPhoneNumber,
+            j$('#messageTextArea').val(),
+            function(result, event){
+                j$('#confomrationOptions').hide();
+                j$('#finishBlock').show();
+                j$('#spinner').hide();
+                done = true;
+                j$.each(JSON.parse(result), function(key, value){
+                    showInfoPanel(value, key);
+                });
+            },
+        {escape: false});
+    });
+
+    j$('#finishProcess').on('click', function(){
+        if(sforce.console.isInConsole()) {
+            //First find the ID of the current tab to close it
+            sforce.console.getEnclosingTabId(closeSubtab);
+        }else{
+            window.history.back();
+        }
+    });
+
+    window.addEventListener('beforeunload', onBeforeunLoadHanlder, false);
+    window.addEventListener('unload', onUnloadHandler, false);
+    init();
+    j$('#tooltipWrapper').css('position', 'fixed');
+    j$('#informationPanel').hide();
+    j$('#confomrationOptions').hide();
+    j$('#finishBlock').hide();
+
+    j$("[id$='TooltipIcon']").tooltip({
+        placement: 'right',
+        template: '<div class="slds-popover slds-popover--tooltip slds-nubbin--left tooltip" style="margin-left:15px" role="tooltip"><div class="slds-popover__body tooltip-inner"></div></div>',
+        html: true,
+        container: j$('#tooltipWrapper'),
+    });
+});
+
+
+</script>
+<div class='live-text'>
+    <div class="slds-media slds-media--center"  style="margin-bottom: 1.5rem;">
+            <div class="slds-media__figure">
+                    <span class="slds-icon_container slds-icon-standard-campaign">
+                            <svg aria-hidden="true" class="slds-icon">
+                                    <use xlink:href="{!URLFOR($Resource.SLDS202, 'assets/icons/standard-sprite/svg/symbols.svg#task')}"></use>
+                            </svg>
+                    </span>
+            </div>
+            <div class="slds-media__body" >
+                    <p class="slds-page-header__title slds-truncate slds-align-middle" title="Send Text Messages(s)">{!$Label.BulkSendTextTitle}</p>
+                    <p class="slds-text-body--small page-header__info"> </p>
+            </div>
+    </div>
+<div id="informationPanel" class="slds-box" style="margin-bottom: 1.5rem; ">
+    <span id="errorIcon" class="slds-icon_container" title="Error">
+        <svg aria-hidden="true" class="slds-icon slds-icon--middle" style="width: 2rem;height: 2rem;">
+            <use xlink:href="{!URLFOR($Resource.SLDS202, '/assets/icons/utility-sprite/svg/symbols.svg#error')}"></use>
+        </svg>
+        <span class="slds-assistive-text">Error</span>
+    </span>
+    <span id="infoIcon" class="slds-icon_container" title="Info">
+        <svg aria-hidden="true" class="slds-icon slds-icon--middle" style="width: 2rem;height: 2rem;">
+            <use xlink:href="{!URLFOR($Resource.SLDS202, '/assets/icons/utility-sprite/svg/symbols.svg#info')}"></use>
+        </svg>
+    </span>
+    <span id="warningIcon" class="slds-icon_container" title="Info">
+        <svg aria-hidden="true" class="slds-icon slds-icon--middle" style="width: 2rem;height: 2rem;">
+            <use xlink:href="{!URLFOR($Resource.SLDS202, '/assets/icons/utility-sprite/svg/symbols.svg#warning')}"></use>
+        </svg>
+    </span>
+    <span id="successIcon" class="slds-icon_container" title="Info">
+        <svg aria-hidden="true" class="slds-icon slds-icon--middle" style="width: 2rem;height: 2rem;">
+            <use xlink:href="{!URLFOR($Resource.SLDS202, '/assets/icons/utility-sprite/svg/symbols.svg#success')}"></use>
+        </svg>
+    </span>
+    <span id="titleInfoPanel" style="margin-left:10px;"></span>
+</div>
+
+    <div class="slds-spinner_container" id="spinner">
+            <div class="slds-spinner--brand slds-spinner slds-spinner--large" aria-hidden="false" role="alert">
+                    <div class="slds-spinner__dot-a"></div>
+                    <div class="slds-spinner__dot-b"></div>
+            </div>
+    </div>
+    <div class="slds-form--horizontal" id="insertDataPage">
+        <div class="slds-form-element" style="margin:10px;width: 60%;">
+                <label class="slds-form-element__label" for="phoneNumberSelect" style="font-size: 0.8rem;">{!$Label.BulkCampaignPhoneTitle}
+                        <span id="phoneTooltipIcon" class="slds-icon_container" title="{!$Label.BulkCampaignPhoneNumberTooltip}">
+                                <svg aria-hidden="true" class="slds-icon slds-icon-text-default slds-icon--x-small" style="height: 0.8rem;">
+                                        <use xlink:href="{!URLFOR($Resource.SLDS202, '/assets/icons/utility-sprite/svg/symbols.svg#info')}"></use>
+                                </svg>
+                        </span>
+                </label>
+                <div class="slds-form-element__control">
+                        <div class="slds-select_container">
+                                <select id="phoneNumberSelect" class="slds-select">
+
+                                </select>
+                        </div>
+                </div>
+        </div>
+        <div class="slds-form-element" style="margin:10px;width: 60%;">
+                <label class="slds-form-element__label" for="messageTextArea" style="font-size: 0.8rem;">{!$Label.BulkTextBodyTitle}
+                        <span id="textAreaTooltipIcon" class="slds-icon_container" title="{!$Label.BulkTextBodyTooltip}">
+                                <svg aria-hidden="true" class="slds-icon slds-icon-text-default slds-icon--x-small" style="height: 0.8rem;">
+                                        <use xlink:href="{!URLFOR($Resource.SLDS202, '/assets/icons/utility-sprite/svg/symbols.svg#info')}"></use>
+                                </svg>
+                        </span>
+                </label>
+                <div class="slds-form-element__control">
+                        <textarea id="messageTextArea" rows="10" class="slds-textarea" placeholder="{!$Label.ActiveChatSendMsgPlaceholderLbl}"></textarea>
+                </div>
+        </div>
+        <div class="slds-form-element">
+                <div class="slds-form-element__control">
+                        <div class="slds-text-align--right" style="margin-right:10px;width: 41%;">
+                                <b>
+                                        <div class="spn" id="characters" style="margin-right:0px;padding-top:5px;font-family:Salesforce Sans,Arial,​sans-serif;font-size:10px;float:left;
+                                                width:95%;" >0</div>
+                                        <div style="margin-right:0px;padding-top:5px;font-family:Salesforce Sans,Arial,​sans-serif;font-size:10px;float:left;width:5%;" class="spn1"    id="numberOfMessages" >(0)</div>
+                                </b>
+                        </div>
+                </div>
+        </div>
+        <div class="slds-align--absolute-center" style="margin:15px;width: 75%;">
+                <div class="slds-form-element">
+                        <button id="sendRequest"  type="button" class="slds-button slds-button--brand">{!$Label.BulkSendTextButton}</button>
+                        <button id="cancelRequest" type="button" class="slds-button slds-button--brand">{!$Label.BulkCancelButton}</button>
+                </div>
+        </div>
+    </div>
+  <div class="slds-align--absolute-center" id="confomrationOptions" style="margin:15px;width: 75%;">
+      <div class="slds-form-element">
+          <button id="confirmSending"  type="button" class="slds-button slds-button--brand">{!$Label.BulkConfirmSendingButton}</button>
+          <button id="backToRequest" type="button" class="slds-button slds-button--brand">{!$Label.BulkBackButton}</button>
+      </div>
+  </div>
+  <div class="slds-align--absolute-center" id="finishBlock" style="margin:15px;width: 75%;">
+      <div class="slds-form-element">
+          <button id="finishProcess"  type="button" class="slds-button slds-button--brand">{!$Label.BulkDoneButton}</button>
+      </div>
+  </div>
+
+    <div id="tooltipWrapper"></div>
+</div>
+</html>
+</apex:page>

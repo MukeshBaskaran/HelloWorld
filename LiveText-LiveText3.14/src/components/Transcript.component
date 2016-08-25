@@ -1,0 +1,94 @@
+<apex:component controller="TranscriptController" >
+<script>
+	var namespace = '{!JSENCODE(nameSpace)}';
+	var fldTranscriptSummary1 = namespace + 'Transcript_Summary_1__c';
+	var fldTranscriptSummary2 = namespace + 'Transcript_Summary_2__c'
+	var convObj = '{!JSENCODE(ConversationHeaderList)}';
+	var ConversationHeader = jQuery.parseJSON(convObj);
+	
+	if (ConversationHeader) {
+	    for (var i = 0; i < ConversationHeader.length; i++) {
+	        if (ConversationHeader[i][fldTranscriptSummary1]) {
+	            var logs = ConversationHeader[i][fldTranscriptSummary1];
+	            InsertParsedHtmlForTranscript1(logs, ConversationHeader[i].Id);
+	        }
+	        if (ConversationHeader[i][fldTranscriptSummary2]) {
+	            var logs = ConversationHeader[i][fldTranscriptSummary2];
+	            InsertParsedHtmlForTranscript2(logs, ConversationHeader[i].Id+'2');
+	        }
+	    }
+	}
+	
+	function InsertParsedHtmlForTranscript1(logs, convHeaderId) {
+	    var j$log = j$('#'+convHeaderId),
+	        str = logs,
+	        html = j$.parseHTML(str),
+	        nodeNames = [];
+	    // Append the parsed HTML
+	    j$log.append(html);
+	}
+	
+	function InsertParsedHtmlForTranscript2(logs, convHeaderId) {
+	    var j$log2 = j$("#"+convHeaderId),
+	        str = logs,
+	        html = j$.parseHTML(str),
+	        nodeNames = [];
+	    // Append the parsed HTML
+	    j$log2.append(html);
+	}
+	
+	j$(document).ready(function(){
+	  	j$(".transcriptLink").click(function(){
+		  	var tabLink = j$(this).attr("href");
+		  	var spanText = j$(this).parent().text();
+		  	var tabIcon;
+		  	var tabLabel;
+		 	
+	  		if(spanText.indexOf('Case') !== -1){
+	  			tabLabel = 'Case';
+		  		tabIcon="{!URLFOR($Resource.LiveText,'images/case16.png')}";
+	  		}else if(spanText.indexOf('Contact') !== -1){
+	  			tabLabel = 'Contact';
+		  		tabIcon="{!URLFOR($Resource.LiveText,'images/contact16.png')}";
+	  		}else if(spanText.indexOf('Lead') !== -1){
+	  			tabLabel = 'Lead';
+	  			tabIcon="{!URLFOR($Resource.LiveText,'images/lead16.png')}";
+	  		}
+	        
+	        var openSubtab= function(result) {
+                //set the primary tabid, this is needed to open the subtab
+                var pID = result.id;
+               	//open the subtab with the right record ID and name set as its title
+               	sforce.console.openSubtab(pID, tabLink, true,tabLabel, null, function(result){	
+	  				if(result.success !== true){
+	  					console.log('A console tab for this ' + tabLabel + ' is already open.');
+	  				}
+	  				else
+	  				{
+	  		    		sforce.console.setTabIcon(tabIcon,result.id);
+	  				}
+	  			});         
+         	};
+         	sforce.console.getEnclosingPrimaryTabId(openSubtab); 
+	   		return false;
+	 	});
+	});
+</script>
+	<apex:attribute name="associatedRecId"
+		description="Id of the associated record for conversation header"
+		type="String" required="true" assignTo="{!recordId}" />
+		
+	<apex:attribute name="transcriptHeader"
+		description="Label for the transcript Header"
+		type="String" required="true" assignTo="{!transcriptLabel}" />
+		
+		
+	<b><br/>{!transcriptLabel}</b><br/><br/><br/>
+	<apex:repeat value="{!convHeaderList}" var="convHeader" id="transcriptSummary">
+		<apex:variable var="convHeaderDetail" value="{!convHeader}" rendered="{!convHeader.Transcript_Summary_1__c != null}">		
+			 <div class ="word_wrap" id="{!convHeader.Id}" style="width:auto !important"/>
+			<div  class ="word_wrap" id="{!convHeader.Id}2" style="width:auto !important"/>
+			<br/><br/>
+		</apex:variable>
+	</apex:repeat>
+</apex:component>

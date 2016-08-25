@@ -1,0 +1,11 @@
+# /
+*.prefs
+.project
+.settings
+.DS_Store
+build.properties
+salesforce.schema
+src/staticresources/LiveText.resource-meta.xml
+src/pages/LiveTextChat.page-meta.xml
+src/package.xml
+.settings/com.salesforce.ide.core.prefs

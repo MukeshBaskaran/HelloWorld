@@ -1,0 +1,23 @@
+<apex:page showHeader="true" sidebar="true" standardController="Contact">
+<apex:includeScript value="/soap/ajax/31.0/connection.js"/>
+<apex:includeScript value="/soap/ajax/31.0/apex.js"/>
+<apex:includeScript value="/support/console/31.0/integration.js"/>
+<script type="text/javascript">
+window.onload = function(){
+	var recordId = '{!$CurrentPage.parameters.Id}';
+	var returnURL = '/' + recordId;
+	
+
+	var urlStart = 'https://'+window.location.hostname+'/apex/LiveTextOptinStatusPage?&records='+recordId+'&retURL='+returnURL;
+
+	if(sforce.console.isInConsole()) 
+	{
+
+		sforce.console.openPrimaryTab(null, urlStart + '&inConsole=yes&optType=0', true, 'Opt-in for Text Messages');
+	}else{
+
+		window.top.location.href = urlStart + '&inConsole=no&optType=0';
+	}
+}	
+</script>           
+</apex:page>

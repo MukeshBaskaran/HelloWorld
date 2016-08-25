@@ -1,0 +1,30 @@
+<apex:page standardController="Conversation_Session__c" extensions="LiveTextPicController" showHeader="false" action="{!init}" >
+ <c:ScriptsComponent id="scmp"/>
+ <meta http-equiv="Content-Type" content="text/html; charset=utf-8"></meta>
+ <apex:pageMessages id="lt_pageMessages"/>
+ <apex:stylesheet value="{!URLFOR($Resource.Framework, 'framework/css/bootstrap.min.css')}"/>
+ <apex:includeScript value="{!URLFOR($Resource.Framework, 'framework/js/bootstrap.min.js')}"/>
+ <apex:includeScript value="/soap/ajax/31.0/connection.js"/>
+ <apex:includeScript value="/support/console/31.0/integration.js"/>
+ <script>
+ var subTabId;
+ j$(document).ready(function() {
+    sforce.console.getFocusedSubtabId(function(result){
+        if(result.success)
+            subTabId = result.id;
+    });
+    sforce.console.addEventListener('setImage', function(result){
+        var message = j$.parseJSON(result.message);
+        sforce.console.getEnclosingPrimaryTabId(function(result) {
+            if(message.fireEventPrimaryTabId == result.id){
+                if(subTabId == message.subTabid){
+                    var src = message.url;
+                    j$("#image").attr("src", src);
+                }
+            }
+        });
+    });
+ });
+ </script>
+ <img id="image" style="max-width: 100%; max-height: 100%;" src="{!imageUrl}"></img>
+</apex:page>

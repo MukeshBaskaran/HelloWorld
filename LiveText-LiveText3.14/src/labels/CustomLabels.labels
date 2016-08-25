@@ -1,0 +1,1909 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomLabels xmlns="http://soap.sforce.com/2006/04/metadata">
+    <labels>
+        <fullName>APICalloutFailureMsg</fullName>
+        <categories>Error Message</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Displayed if HeyWire API call is not successful.</shortDescription>
+        <value>There was error while connecting to the LiveText service: {0}. Please try again. If the error persists please contact LiveText support at http://support.hwlivetext.com</value>
+    </labels>
+    <labels>
+        <fullName>AccountDetailPBTitle</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Label for account detail section on admin page.</shortDescription>
+        <value>LiveText Account Details</value>
+    </labels>
+    <labels>
+        <fullName>AccountIdInput</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Label for Account Id Input on Admin Page.</shortDescription>
+        <value>Account ID</value>
+    </labels>
+    <labels>
+        <fullName>AccountNameLbl</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Displayed on detail tab of Conversation Header page.</shortDescription>
+        <value>Account Name</value>
+    </labels>
+    <labels>
+        <fullName>ActionLbl</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Page block table header</shortDescription>
+        <value>Action</value>
+    </labels>
+    <labels>
+        <fullName>ActionResultLTNumberNotFoundError</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>No LTNumber error for action results</shortDescription>
+        <value>Live Text phone number not found.</value>
+    </labels>
+    <labels>
+        <fullName>ActionResultMultiplePhonesErrorSuffix</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Multiple phones error for action restuls</shortDescription>
+        <value>was selected multiple times</value>
+    </labels>
+    <labels>
+        <fullName>ActionResultNoPhoneError</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>No phone error for action results</shortDescription>
+        <value>To phone number was not specified.</value>
+    </labels>
+    <labels>
+        <fullName>ActionResultPhoneNotOptedIn</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Phone not opted in error for action results</shortDescription>
+        <value>Phone number is not opted in.</value>
+    </labels>
+    <labels>
+        <fullName>ActionResultShortCodeInternationalAttemptError</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Attempt to send international text form a shortcode.</shortDescription>
+        <value>International text from a Shortcode attempt.</value>
+    </labels>
+    <labels>
+        <fullName>ActiveChatSendMsgPlaceholderLbl</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>true</protected>
+        <shortDescription>Displayed on Chat Panel window</shortDescription>
+        <value>Enter your message here...</value>
+    </labels>
+    <labels>
+        <fullName>AddLbl</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Displayed on configure no admin page.</shortDescription>
+        <value>Add</value>
+    </labels>
+    <labels>
+        <fullName>AddSupportNoBtn</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Label for add support no button on Admin Page.</shortDescription>
+        <value>Add Phone Number</value>
+    </labels>
+    <labels>
+        <fullName>AdminPageTitleLbl</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>true</protected>
+        <shortDescription>Displayed on configure no admin page.</shortDescription>
+        <value>Admin</value>
+    </labels>
+    <labels>
+        <fullName>AdminPgSubTitleLbl</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>true</protected>
+        <shortDescription>Displayed on configure no admin page.</shortDescription>
+        <value>LiveText Administration</value>
+    </labels>
+    <labels>
+        <fullName>AllowNewLbl</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Displayed on configure no admin page.</shortDescription>
+        <value>Allow New</value>
+    </labels>
+    <labels>
+        <fullName>AllowNewLblHelp</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Displayed on configure no admin page.</shortDescription>
+        <value>Record type selections made in the &apos;Screen pop - No Records Found&apos; section above will override selections made here.</value>
+    </labels>
+    <labels>
+        <fullName>AssignLbl</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Displayed on configure no admin page.</shortDescription>
+        <value>Assign</value>
+    </labels>
+    <labels>
+        <fullName>AssignUserLbl</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Displayed on configure no admin page.</shortDescription>
+        <value>Assign Users</value>
+    </labels>
+    <labels>
+        <fullName>AssignUsersDescLbl</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Displayed on configure no admin page.</shortDescription>
+        <value>Assign users to this phone number.</value>
+    </labels>
+    <labels>
+        <fullName>AutoLinkingDescriptionLbl</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Used on the configure phone number screen</shortDescription>
+        <value>Records must include the inbound text&apos;s phone number or be linked with a record that includes the inbound text&apos;s phone number to be auto-linked with a text session. The most recently modified record will be auto-linked IF multiple records of the same type matching the inbound text&apos;s phone number are found.</value>
+    </labels>
+    <labels>
+        <fullName>AutoLinkingHeaderLbl</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Used on the configure phone number screen</shortDescription>
+        <value>Choose the record types that will be auto-linked to a new text session after the text session is accepted.</value>
+    </labels>
+    <labels>
+        <fullName>AutoLinkingLbl</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Used on the configure phone number screen</shortDescription>
+        <value>Auto-linking</value>
+    </labels>
+    <labels>
+        <fullName>AutoResDetailLbl</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Displayed on configure no admin page.</shortDescription>
+        <value>Response Management</value>
+    </labels>
+    <labels>
+        <fullName>AutoResponseMsgLbl</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>AutoResponseMsgLbl</shortDescription>
+        <value>Auto-Response Message</value>
+    </labels>
+    <labels>
+        <fullName>AvailableMembersLbl</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Displayed on configure no admin page.</shortDescription>
+        <value>Available Users</value>
+    </labels>
+    <labels>
+        <fullName>AvailableRecordTypesLbl</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Displayed on configure no admin page.</shortDescription>
+        <value>Available Record Types</value>
+    </labels>
+    <labels>
+        <fullName>BasicInfoTitle</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Label for Basic Information section on admin page.</shortDescription>
+        <value>Basic Information</value>
+    </labels>
+    <labels>
+        <fullName>BasicInformationLbl</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Displayed on configure no admin page.</shortDescription>
+        <value>Basic Information</value>
+    </labels>
+    <labels>
+        <fullName>BulkBackButton</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Back button text</shortDescription>
+        <value>Back</value>
+    </labels>
+    <labels>
+        <fullName>BulkBeforeUnload</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>For before unload on bulk sms page</shortDescription>
+        <value>Data will be lost if you leave the page, are you sure? If you want to edit your text, use the \&quot;back\&quot; button.</value>
+    </labels>
+    <labels>
+        <fullName>BulkCampaignAfterOptOutStatusTooltip</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Tooltip for afte opting-out status</shortDescription>
+        <value>The status that will be set for a campaign member after the member opt-outs following the receipt of the campaign message.</value>
+    </labels>
+    <labels>
+        <fullName>BulkCampaignAfterResponseStatusTooltip</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Tooltip for after response status</shortDescription>
+        <value>The status that will be set for a campaign member after the member has responded to the campaign message.</value>
+    </labels>
+    <labels>
+        <fullName>BulkCampaignAfterSendStatusTooltip</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Tooltip for after send status</shortDescription>
+        <value>The status that will be set for campaign members after a message has been sent.</value>
+    </labels>
+    <labels>
+        <fullName>BulkCampaignBatchLockError</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Another batch job is currently running</shortDescription>
+        <value>Another batch job is currently running. Please wait a few minutes and try again.</value>
+    </labels>
+    <labels>
+        <fullName>BulkCampaignBatchStatusAborted</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Batch is Aborted.</shortDescription>
+        <value>Aborted</value>
+    </labels>
+    <labels>
+        <fullName>BulkCampaignBatchStatusFailed</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Batch is Failed.</shortDescription>
+        <value>Failed</value>
+    </labels>
+    <labels>
+        <fullName>BulkCampaignBatchStatusFinish</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Job completed with or without failures.</shortDescription>
+        <value>Completed</value>
+    </labels>
+    <labels>
+        <fullName>BulkCampaignCancel</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Cancel popup</shortDescription>
+        <value>Are you sure you want to close the wizard to Send Text to Campaign Members?</value>
+    </labels>
+    <labels>
+        <fullName>BulkCampaignDoNotChangeStatus</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Do not change status</shortDescription>
+        <value>--- Do not change the status ---</value>
+    </labels>
+    <labels>
+        <fullName>BulkCampaignDuplicateStatusTitle</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Status for duplicates</shortDescription>
+        <value>Status for duplicates</value>
+    </labels>
+    <labels>
+        <fullName>BulkCampaignDuplicateStatusTooltip</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Tooltip for duplicate status</shortDescription>
+        <value>The status that will be set for campaign members that contain a duplicate phone number.</value>
+    </labels>
+    <labels>
+        <fullName>BulkCampaignFilterByStatusTitle</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Filter by status</shortDescription>
+        <value>Filter by status</value>
+    </labels>
+    <labels>
+        <fullName>BulkCampaignFilterByStatusTooltip</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Tooltip for filter by status</shortDescription>
+        <value>Only campaign members with the selected status will recieve this message.</value>
+    </labels>
+    <labels>
+        <fullName>BulkCampaignNoStatusError</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>No status error</shortDescription>
+        <value>Please check at least one status.</value>
+    </labels>
+    <labels>
+        <fullName>BulkCampaignNotActiveError</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Not active campaign error message</shortDescription>
+        <value>Send Text to Campaign Members is only available for active campaigns. Please set the campaign to active and try again.</value>
+    </labels>
+    <labels>
+        <fullName>BulkCampaignNumberOfRecipientsChanged</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription># of recipients changed during process</shortDescription>
+        <value>Number of recipients has been changed from:</value>
+    </labels>
+    <labels>
+        <fullName>BulkCampaignPhoneNumberTooltip</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Tooltip for LTNumber</shortDescription>
+        <value>The phone number or short code to send text messages from.</value>
+    </labels>
+    <labels>
+        <fullName>BulkCampaignPhoneSelectDefault</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Select phone number / short code</shortDescription>
+        <value>Select phone number / short code</value>
+    </labels>
+    <labels>
+        <fullName>BulkCampaignPhoneSelectDefaultError</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Please select a phone number / short code</shortDescription>
+        <value>Please select a phone number / short code</value>
+    </labels>
+    <labels>
+        <fullName>BulkCampaignPhoneTitle</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Title for campaign phone select</shortDescription>
+        <value>Phone number / short code</value>
+    </labels>
+    <labels>
+        <fullName>BulkCampaignRecordLimitLongcodeSuffixError</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Limit error suffix</shortDescription>
+        <value>or fewer campaign members. To send to more than 25 campaign members at once a shortcode is required. Please contact your HeyWire sales rep for more info.</value>
+    </labels>
+    <labels>
+        <fullName>BulkCampaignRecordLimitPrefixError</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Limit error prefix</shortDescription>
+        <value>Please select</value>
+    </labels>
+    <labels>
+        <fullName>BulkCampaignRecordLimitSuffixError</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Limit error suffix</shortDescription>
+        <value>or fewer campaign members.</value>
+    </labels>
+    <labels>
+        <fullName>BulkCampaignReturnOnBrowserError</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Deleted storage object - no campaign id error message</shortDescription>
+        <value>This webpage has expired. Redirecting to campaign...</value>
+    </labels>
+    <labels>
+        <fullName>BulkCampaignShortCodeRequiredError</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Shortcode required</shortDescription>
+        <value>To send to more than 25 campaign members at once a shortcode is required. Please contact your HeyWire sales rep for more info.</value>
+    </labels>
+    <labels>
+        <fullName>BulkCampaignStatusAfterOptOutTitle</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Status after opt-out</shortDescription>
+        <value>Status after opt-out</value>
+    </labels>
+    <labels>
+        <fullName>BulkCampaignStatusAfterResponseTitle</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Status after response</shortDescription>
+        <value>Status after response</value>
+    </labels>
+    <labels>
+        <fullName>BulkCampaignStatusAfterSendTitle</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Status after send</shortDescription>
+        <value>Status after send</value>
+    </labels>
+    <labels>
+        <fullName>BulkCampaignTabTitle</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Campaign send bulk tab title</shortDescription>
+        <value>Send Text to Campaign Members</value>
+    </labels>
+    <labels>
+        <fullName>BulkCampaignTextBodyTooltip</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Tooltip for message</shortDescription>
+        <value>The message that will be sent to campaign members.</value>
+    </labels>
+    <labels>
+        <fullName>BulkCampaignZeroMembersError</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Zero members error message</shortDescription>
+        <value>Please select additional campaign members. 0 campaign members selected.</value>
+    </labels>
+    <labels>
+        <fullName>BulkCancelButton</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Cancel button text</shortDescription>
+        <value>Cancel</value>
+    </labels>
+    <labels>
+        <fullName>BulkCloseWizard</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>For close bulk wizard</shortDescription>
+        <value>Are you sure you want to close the wizard to Send Text to a List?</value>
+    </labels>
+    <labels>
+        <fullName>BulkConfirmSendingButton</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Confirm Sending button text</shortDescription>
+        <value>Confirm Sending</value>
+    </labels>
+    <labels>
+        <fullName>BulkCongrats</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>For ending bulk wizard</shortDescription>
+        <value>Congratulations! You have completed the wizard to send text messages to multiple recipients.</value>
+    </labels>
+    <labels>
+        <fullName>BulkDoneButton</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Done button text</shortDescription>
+        <value>Done</value>
+    </labels>
+    <labels>
+        <fullName>BulkNoMobilePhoneSuffix</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>No mobile error</shortDescription>
+        <value>recipient does not have a \&quot;mobile number\&quot;. Text messages will be sent to the \&quot;phone number\&quot; instead.</value>
+    </labels>
+    <labels>
+        <fullName>BulkNoMobilePhonesSuffix</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>true</protected>
+        <shortDescription>No mobiles error</shortDescription>
+        <value>recipients do not have a \&quot;mobile number\&quot;. Text messages will be sent to the \&quot;phone number\&quot; instead.</value>
+    </labels>
+    <labels>
+        <fullName>BulkNoPhoneAssignedError</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>No phone assigned error message</shortDescription>
+        <value>No LiveText numbers assigned. Please contact your administrator for access.</value>
+    </labels>
+    <labels>
+        <fullName>BulkNoPhoneSuffix</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>No phone error</shortDescription>
+        <value>recipient has neither a \&quot;mobile number\&quot; nor a \&quot;phone number\&quot;. Text messages will not be sent to this recipient.</value>
+    </labels>
+    <labels>
+        <fullName>BulkNoPhonesSuffix</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>true</protected>
+        <shortDescription>No phone error bulk</shortDescription>
+        <value>Recipients have neither a \&quot;mobile number\&quot; nor a \&quot;phone number\&quot;. Text messages will not be sent to these recipients.</value>
+    </labels>
+    <labels>
+        <fullName>BulkNoSendTextError</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>No message error</shortDescription>
+        <value>Please enter a text to send.</value>
+    </labels>
+    <labels>
+        <fullName>BulkPhoneTitle</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Title for phone select</shortDescription>
+        <value>Please select the phone number / short code you would like to send texts from.</value>
+    </labels>
+    <labels>
+        <fullName>BulkRecipientSelectedSuffix</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Recipient selected suffix</shortDescription>
+        <value>recipient have been selected to receive text message.</value>
+    </labels>
+    <labels>
+        <fullName>BulkRecipientsSelectedSuffix</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Recipients selected suffix</shortDescription>
+        <value>recipients have been selected to receive text messages.</value>
+    </labels>
+    <labels>
+        <fullName>BulkRecordLimitPrefix</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Bulk Record limit prefix</shortDescription>
+        <value>A maximum of</value>
+    </labels>
+    <labels>
+        <fullName>BulkRecordLimitSuffix</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Bulk Record limit suffix</shortDescription>
+        <value>text messages may be sent at once. Please select fewer recipients and try again.</value>
+    </labels>
+    <labels>
+        <fullName>BulkSendTextButton</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Send text button text</shortDescription>
+        <value>Send Text</value>
+    </labels>
+    <labels>
+        <fullName>BulkSendTextTitle</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Title</shortDescription>
+        <value>Send Text Message(s)</value>
+    </labels>
+    <labels>
+        <fullName>BulkSendToPrefix</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Send info prefix</shortDescription>
+        <value>You will be sending text to</value>
+    </labels>
+    <labels>
+        <fullName>BulkSendToSuffix</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Send info suffix</shortDescription>
+        <value>recipient.</value>
+    </labels>
+    <labels>
+        <fullName>BulkSendToSuffixPlural</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Send info suffix plural</shortDescription>
+        <value>recipients.</value>
+    </labels>
+    <labels>
+        <fullName>BulkTabName</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>For bulk tab name</shortDescription>
+        <value>Send Bulk SMS</value>
+    </labels>
+    <labels>
+        <fullName>BulkTextBodyTitle</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Title for Text Body select</shortDescription>
+        <value>Text Body</value>
+    </labels>
+    <labels>
+        <fullName>BulkTextBodyTooltip</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Tooltip for message</shortDescription>
+        <value>The message that will be sent to recipient(s).</value>
+    </labels>
+    <labels>
+        <fullName>BusinessHrsLbl</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Displayed on configure no admin page.</shortDescription>
+        <value>Business Hours</value>
+    </labels>
+    <labels>
+        <fullName>CampaignResponseTypeOptOut</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Response Type</shortDescription>
+        <value>Opt Out</value>
+    </labels>
+    <labels>
+        <fullName>CampaignResponseTypeResponded</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Response Type</shortDescription>
+        <value>Responded</value>
+    </labels>
+    <labels>
+        <fullName>CampaignResponseTypeResponding</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Response Type</shortDescription>
+        <value>Responding</value>
+    </labels>
+    <labels>
+        <fullName>CancelBtn</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Displayed on configure no admin page.</shortDescription>
+        <value>Cancel</value>
+    </labels>
+    <labels>
+        <fullName>CannotDeleteSupportNoMsg</fullName>
+        <categories>Error Message</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Displayed if delete api return 200.</shortDescription>
+        <value>A validated Support Number cannot be deleted.</value>
+    </labels>
+    <labels>
+        <fullName>ChatEndMessageLengthMsg</fullName>
+        <categories>Error Message</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Displayed on configure no admin page.</shortDescription>
+        <value>The Text Session End Message must be less than 160 characters.</value>
+    </labels>
+    <labels>
+        <fullName>ChatEndMsgLbl</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Displayed on configure no admin page.</shortDescription>
+        <value>Text Session End Message</value>
+    </labels>
+    <labels>
+        <fullName>ConnectBtn</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Label for connect button on Admin Page.</shortDescription>
+        <value>Connect</value>
+    </labels>
+    <labels>
+        <fullName>ConnectedByHelpTxtLbl</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>true</protected>
+        <shortDescription>Displayed on configure no admin page.</shortDescription>
+        <value>Displays the name of the user who made the last successful connection and date, when the connection was made.</value>
+    </labels>
+    <labels>
+        <fullName>ConnectedByLbl</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>true</protected>
+        <shortDescription>Displayed on configure no admin page.</shortDescription>
+        <value>Connected By</value>
+    </labels>
+    <labels>
+        <fullName>ConnectionExceptionMsg</fullName>
+        <categories>Error Message</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>ConnectionExceptionMsg</shortDescription>
+        <value>LiveText was unable to validate your API credentials. Please verify your Account ID and Activation Code and try again. If the error persists please contact LiveText support at http://support.hwlivetext.com</value>
+    </labels>
+    <labels>
+        <fullName>ConnectionLostMsg</fullName>
+        <categories>Browser notification</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Browser notification message for connection lost.</shortDescription>
+        <value>Please check your connection.</value>
+    </labels>
+    <labels>
+        <fullName>ConnectionLostTitle</fullName>
+        <categories>Browser notification</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Browser notification title for connection lost.</shortDescription>
+        <value>Connection Error</value>
+    </labels>
+    <labels>
+        <fullName>CountryCodesDescriptionLbl</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Used on the configure phone number screen</shortDescription>
+        <value>&apos;+1&apos; will be inserted as a prefix for US and Canadian based numbers. All international numbers (outside US and Canada) will be populated with the appropriate country code prefix regardless of the selection made here.</value>
+    </labels>
+    <labels>
+        <fullName>CountryCodesExampleLbl</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Used on the configure phone number screen</shortDescription>
+        <value>Example: &apos;+1&apos; will be inserted as a prefix for US and Canadian based numbers.</value>
+    </labels>
+    <labels>
+        <fullName>CountryCodesHeaderLbl</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Used on the configure phone number screen</shortDescription>
+        <value>Include the United States or Canadian country code prefix for auto-populated phone numbers in the &apos;New&apos; tabs</value>
+    </labels>
+    <labels>
+        <fullName>CountryCodesLbl</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Used on the configure phone number screen</shortDescription>
+        <value>Country Codes</value>
+    </labels>
+    <labels>
+        <fullName>CreateActivityHeaderLbl</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Used on the configure phone number screen</shortDescription>
+        <value>Choose the record types that will be created when a text session is ended.</value>
+    </labels>
+    <labels>
+        <fullName>CreateActivityLbl</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Used on the configure phone number screen</shortDescription>
+        <value>Create Activity Records</value>
+    </labels>
+    <labels>
+        <fullName>CreateActivityRecordsLbl</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Used on the configure phone number screen</shortDescription>
+        <value>Activity records are created for all records linked to a text session.</value>
+    </labels>
+    <labels>
+        <fullName>CriticalWaitAlertTimeMsg</fullName>
+        <categories>Error Message</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Critical Wait Alert Time Error message</shortDescription>
+        <value>Critical Wait Alert Time (seconds): Invalid number</value>
+    </labels>
+    <labels>
+        <fullName>DeleteActionLbl</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Displayed on configure no admin page.</shortDescription>
+        <value>Del</value>
+    </labels>
+    <labels>
+        <fullName>DisconnectSoundEnabledLbl</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Label for Disconnect Sound Enabled pageblock table header</shortDescription>
+        <value>Disconnect Sound Enabled</value>
+    </labels>
+    <labels>
+        <fullName>DuplicatePhoneNoMsg</fullName>
+        <categories>Error Message</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Displayed on configure no admin page.</shortDescription>
+        <value>Duplicate Phone Numbers are not allowed.</value>
+    </labels>
+    <labels>
+        <fullName>DuplicateTextSessionMsg</fullName>
+        <categories>Error Message</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Displayed on chat panel.</shortDescription>
+        <value>A Text Session is currently active between these phone numbers.</value>
+    </labels>
+    <labels>
+        <fullName>EditActionLbl</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Displayed on configure no admin page.</shortDescription>
+        <value>Edit</value>
+    </labels>
+    <labels>
+        <fullName>EmailLbl</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Displayed on detail tab of Conversation Header page.</shortDescription>
+        <value>Email</value>
+    </labels>
+    <labels>
+        <fullName>EndChatBtnLbl</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>true</protected>
+        <shortDescription>Displayed on detail tab of Conversation Header page.</shortDescription>
+        <value>End Text Session</value>
+    </labels>
+    <labels>
+        <fullName>EndChatLbl</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Displayed on detail tab of Conversation Header page.</shortDescription>
+        <value>---- End Text Session ----</value>
+    </labels>
+    <labels>
+        <fullName>EndStatus</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>EndStatus</shortDescription>
+        <value>Ended</value>
+    </labels>
+    <labels>
+        <fullName>EndedChatSendMsgError</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>true</protected>
+        <shortDescription>Displayed on Chat Panel window</shortDescription>
+        <value>This text session was accepted by another user</value>
+    </labels>
+    <labels>
+        <fullName>EndedChatSendMsgPlaceholderLbl</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>true</protected>
+        <shortDescription>Displayed on Chat Panel window</shortDescription>
+        <value>Conversation has ended.</value>
+    </labels>
+    <labels>
+        <fullName>EndpointUrlInput</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Label for Endpoint Url on Admin Page.</shortDescription>
+        <value>Endpoint Url</value>
+    </labels>
+    <labels>
+        <fullName>FindBtn</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Displayed on configure no admin page.</shortDescription>
+        <value>Find</value>
+    </labels>
+    <labels>
+        <fullName>ForLbl</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Displayed on configure no admin page.</shortDescription>
+        <value>For :</value>
+    </labels>
+    <labels>
+        <fullName>GreetingMsgLengthLimitMsg</fullName>
+        <categories>Error Message</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Displayed on configure no admin page.</shortDescription>
+        <value>The {0} must be less than 160 characters.</value>
+    </labels>
+    <labels>
+        <fullName>HeyWireCredentialsRequiredMsg</fullName>
+        <categories>Error Message</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Error message required values are not entered on Admin page.</shortDescription>
+        <value>Account ID and Activation Code are required values to connect to LiveText.</value>
+    </labels>
+    <labels>
+        <fullName>InitialMsgLbl</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Displayed on configure no admin page.</shortDescription>
+        <value>Text Session Start Message</value>
+    </labels>
+    <labels>
+        <fullName>InsufficientPrivilegesError</fullName>
+        <categories>Browser notification</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Browser notification message for insufficient privileges.</shortDescription>
+        <value>Insufficient Privileges. You do not have the level of access necessary to perform the operation you requested. Please contact your administrator for access.</value>
+    </labels>
+    <labels>
+        <fullName>InternationalShortCodeTextingError</fullName>
+        <categories>Error Message</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Displayed when user attempts to message internationally using a short code.</shortDescription>
+        <value>International text messaging is not possible with shortcodes.</value>
+    </labels>
+    <labels>
+        <fullName>InvalidHeyWireCredentialMsg</fullName>
+        <categories>Error Message</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Displayed on configure no admin page.</shortDescription>
+        <value>Account Id and Activation Code should contain alphanumeric characters only.</value>
+    </labels>
+    <labels>
+        <fullName>InvalidHeywireCredentialsMsg</fullName>
+        <categories>Error Message</categories>
+        <language>en_US</language>
+        <protected>true</protected>
+        <shortDescription>Displayed while connecting to heywire servers.</shortDescription>
+        <value>Account details could not be validated by LiveText. Please check your credentials and try again.</value>
+    </labels>
+    <labels>
+        <fullName>InvalidPhoneNoMsg</fullName>
+        <categories>Error Message</categories>
+        <language>en_US</language>
+        <protected>true</protected>
+        <shortDescription>Displayed on configure no admin page.</shortDescription>
+        <value>Phone Number should contain only numerical values.</value>
+    </labels>
+    <labels>
+        <fullName>InvalidPhoneNumberMsg</fullName>
+        <categories>Error Message</categories>
+        <language>en_US</language>
+        <protected>true</protected>
+        <shortDescription>Displayed on configure no admin page.</shortDescription>
+        <value>Invalid phone number. Phone numbers must include the applicable country code.</value>
+    </labels>
+    <labels>
+        <fullName>ItrEnabledLbl</fullName>
+        <categories>Error Message</categories>
+        <language>en_US</language>
+        <protected>true</protected>
+        <shortDescription>Displayed on configure no admin page.</shortDescription>
+        <value>ITR Enabled</value>
+    </labels>
+    <labels>
+        <fullName>ItrEnabledWarning</fullName>
+        <categories>Error Message</categories>
+        <language>en_US</language>
+        <protected>true</protected>
+        <shortDescription>Displayed on configure no admin page.</shortDescription>
+        <value>Messages may not route to the LiveText Agent Console if ITR is enabled without the proper configuration. Please check Admin Guide - Inbound / Mobile Originate (MO) section:</value>
+    </labels>
+    <labels>
+        <fullName>LTNumberLengthMsg</fullName>
+        <categories>Error Message</categories>
+        <language>en_US</language>
+        <protected>true</protected>
+        <shortDescription>Displayed on configure no admin page.</shortDescription>
+        <value>Phone Number must contain 5, 6 or 10 - 17 digits</value>
+    </labels>
+    <labels>
+        <fullName>LastModifiedByLbl</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Label for Last Modified By pageblock table header</shortDescription>
+        <value>Last Modified By</value>
+    </labels>
+    <labels>
+        <fullName>LastModifiedDateLbl</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Label for Last Modified Date pageblock table header</shortDescription>
+        <value>Last Modified Date</value>
+    </labels>
+    <labels>
+        <fullName>LastModifiedLbl</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Displayed on detail tab of LiveText Chat page.</shortDescription>
+        <value>Last Modified</value>
+    </labels>
+    <labels>
+        <fullName>LinkLbl</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Displayed on detail tab of LiveText Chat page.</shortDescription>
+        <value>Link</value>
+    </labels>
+    <labels>
+        <fullName>LinkedCaseLbl</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>true</protected>
+        <shortDescription>Displayed on detail tab of Conversation Header page.</shortDescription>
+        <value>---- Linked Case ----</value>
+    </labels>
+    <labels>
+        <fullName>LinkedContactLbl</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>true</protected>
+        <shortDescription>Displayed on detail tab of Conversation Header page.</shortDescription>
+        <value>---- Linked Contact ----</value>
+    </labels>
+    <labels>
+        <fullName>LinkedLeadLbl</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>true</protected>
+        <shortDescription>Displayed on detail tab of Conversation Header page.</shortDescription>
+        <value>---- Linked Lead ----</value>
+    </labels>
+    <labels>
+        <fullName>LiveTextAdminProfileLbl</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Stores the livetext admin profile name, which is used in the code.</shortDescription>
+        <value>System Administrator</value>
+    </labels>
+    <labels>
+        <fullName>LiveTextAgentProfileLbl</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Stores the livetext agent profile name, which is used in the code.</shortDescription>
+        <value>LiveText Agent</value>
+    </labels>
+    <labels>
+        <fullName>LiveTextManagerProfileLbl</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Stores the livetext manager profile name, which is used in the code.</shortDescription>
+        <value>System Administrator</value>
+    </labels>
+    <labels>
+        <fullName>NameLabelLbl</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Displayed on configure no admin page.</shortDescription>
+        <value>Phone Number Label</value>
+    </labels>
+    <labels>
+        <fullName>NameLbl</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Label for Name pageblock table header</shortDescription>
+        <value>Phone Number Label</value>
+    </labels>
+    <labels>
+        <fullName>NewInboundConversationMsg</fullName>
+        <categories>Browser notification</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Browser notification message for new inbound conversation</shortDescription>
+        <value>You have an incoming LiveText request.</value>
+    </labels>
+    <labels>
+        <fullName>NewInboundConversationTitle</fullName>
+        <categories>Browser notification</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Browser notification title for new inbound conversation</shortDescription>
+        <value>New LiveText Request</value>
+    </labels>
+    <labels>
+        <fullName>NewTabsHeaderLbl</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Used on the configure phone number screen</shortDescription>
+        <value>Choose the record types to open as subtabs after a text session is accepted.</value>
+    </labels>
+    <labels>
+        <fullName>NewTabsLbl</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Used on the configure phone number screen</shortDescription>
+        <value>&apos;New&apos; Tabs</value>
+    </labels>
+    <labels>
+        <fullName>NoAvailableUsersMsgLbl</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Displayed on configure no admin page.</shortDescription>
+        <value>No Available Users Message</value>
+    </labels>
+    <labels>
+        <fullName>NoAvaliableUsersMsgLbl</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Displayed on configure no admin page.</shortDescription>
+        <value>No Avaliable Users Message</value>
+    </labels>
+    <labels>
+        <fullName>NoRecordTypeLbl</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Displayed in the screen pop options on admin page</shortDescription>
+        <value>No record type</value>
+    </labels>
+    <labels>
+        <fullName>NoneLbl</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Displayed in the business hrs list on admin page</shortDescription>
+        <value>None</value>
+    </labels>
+    <labels>
+        <fullName>NoneWithHyphenLbl</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Displayed in the list of available/selected members on admin page.</shortDescription>
+        <value>---None---</value>
+    </labels>
+    <labels>
+        <fullName>NumberConfSettingLbl</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Displayed on configure no admin page.</shortDescription>
+        <value>Phone Number Configuration Settings</value>
+    </labels>
+    <labels>
+        <fullName>OAuthServerEurope</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Label for Europe Auth server on the admin page.</shortDescription>
+        <value>Europe</value>
+    </labels>
+    <labels>
+        <fullName>OAuthServerLabel</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Label for Auth server on the admin page.</shortDescription>
+        <value>LiveText Server</value>
+    </labels>
+    <labels>
+        <fullName>OAuthServerNA</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Label for North America Auth server on the admin page.</shortDescription>
+        <value>North America</value>
+    </labels>
+    <labels>
+        <fullName>OAuthServerTooltip</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Tooltip for Auth server page on the admin page.</shortDescription>
+        <value>The LiveText server to use for authenticating the Account ID and Activation Code.</value>
+    </labels>
+    <labels>
+        <fullName>OAuthTokenInput</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Label for Auth token on the admin page.</shortDescription>
+        <value>Activation Code</value>
+    </labels>
+    <labels>
+        <fullName>OAuthUrlInput</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Label for oAuth Url on Admin Page.</shortDescription>
+        <value>oAuth Url</value>
+    </labels>
+    <labels>
+        <fullName>OfflineHrsMsgLbl</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Displayed on configure no admin page.</shortDescription>
+        <value>Offline Hours Message</value>
+    </labels>
+    <labels>
+        <fullName>OfflineHrsReqMsg</fullName>
+        <categories>Error Message</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Displayed on configure no admin page.</shortDescription>
+        <value>Offline Hours Message is required if Business Hours are selected.</value>
+    </labels>
+    <labels>
+        <fullName>OptOutStatusMsg</fullName>
+        <categories>Error Message</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Status message when user has opted out.</shortDescription>
+        <value>{0} has opted out of receiving messages from {1}.</value>
+    </labels>
+    <labels>
+        <fullName>OrgTypeDropDown</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Label for Org type drop down on Admin page.</shortDescription>
+        <value>Org Type</value>
+    </labels>
+    <labels>
+        <fullName>Other_Label</fullName>
+        <categories>TXT</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Other</shortDescription>
+        <value>Other</value>
+    </labels>
+    <labels>
+        <fullName>OutBoundTxt_EndMsg</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Outbound text end message</shortDescription>
+        <value>End of Message</value>
+    </labels>
+    <labels>
+        <fullName>OutBoundTxt_SentMsg</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Outbound text start message.</shortDescription>
+        <value>Outbound Text Message Sent</value>
+    </labels>
+    <labels>
+        <fullName>OutboundMessageTitle</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Outbound message title</shortDescription>
+        <value>Outbound Text Message</value>
+    </labels>
+    <labels>
+        <fullName>PhoneIsInvalidError</fullName>
+        <categories>Error Message</categories>
+        <language>en_US</language>
+        <protected>true</protected>
+        <shortDescription>Invalid recipien phone error msg</shortDescription>
+        <value>Invalid phone number.</value>
+    </labels>
+    <labels>
+        <fullName>PhoneLabelHelpTextLbl</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Displayed on configure no admin page.</shortDescription>
+        <value>The name for the phone number. Example: &quot;Main Support Number&quot; or &quot;1-844-HeyWire&quot;</value>
+    </labels>
+    <labels>
+        <fullName>PhoneLbl</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Displayed on detail tab of Conversation Header page.</shortDescription>
+        <value>Phone</value>
+    </labels>
+    <labels>
+        <fullName>PhoneNoLengthMsg</fullName>
+        <categories>Error Message</categories>
+        <language>en_US</language>
+        <protected>true</protected>
+        <shortDescription>Displayed on chat page.</shortDescription>
+        <value>Phone Number must contain 8 - 17 digits.</value>
+    </labels>
+    <labels>
+        <fullName>PhoneNumberLbl</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Displayed on configure no admin page.</shortDescription>
+        <value>Phone Number / Shortcode</value>
+    </labels>
+    <labels>
+        <fullName>PopupWindowErrMsg</fullName>
+        <categories>Error Message</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Displayed on configure no admin page.</shortDescription>
+        <value>A LiveText pop-up window was blocked. Please update your browser’s settings to allow pop-ups from this page and try again.</value>
+    </labels>
+    <labels>
+        <fullName>PrevTextSessionsLbl1</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>true</protected>
+        <shortDescription>Displayed when showing all transcripts</shortDescription>
+        <value>Previous Text Session Transcripts Linked to the Records Above</value>
+    </labels>
+    <labels>
+        <fullName>PrevTextSessionsLbl2</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>true</protected>
+        <shortDescription>Displayed when showing transcripts for a selected record</shortDescription>
+        <value>Previous Text Session Transcripts Linked to</value>
+    </labels>
+    <labels>
+        <fullName>PrevTextSessionsWithCustomerLbl</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>true</protected>
+        <shortDescription>Displayed on detail tab of Conversation Header page.</shortDescription>
+        <value>Previous Text Sessions with Customer</value>
+    </labels>
+    <labels>
+        <fullName>RecipientNumberRequiredLbl</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Recipient Number is required.</shortDescription>
+        <value>Recipient Number is required.</value>
+    </labels>
+    <labels>
+        <fullName>RecordCaseNumberLbl</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Displayed on detail tab of Conversation Header page.</shortDescription>
+        <value>Case Number</value>
+    </labels>
+    <labels>
+        <fullName>RecordNameLbl</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Displayed on detail tab of Conversation Header page.</shortDescription>
+        <value>Name</value>
+    </labels>
+    <labels>
+        <fullName>RecordTypeLbl</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Displayed on detail tab of Conversation Header page.</shortDescription>
+        <value>Record Type</value>
+    </labels>
+    <labels>
+        <fullName>RefreshConnectionBtn</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Label for refresh connection button on Admin Page.</shortDescription>
+        <value>Refresh Connection</value>
+    </labels>
+    <labels>
+        <fullName>RemoveLbl</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Displayed on configure no admin page.</shortDescription>
+        <value>Remove</value>
+    </labels>
+    <labels>
+        <fullName>SMSNotDeliveredLbl</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>true</protected>
+        <shortDescription>Displayed as message not sent error icon title.</shortDescription>
+        <value>Message Not Delivered.</value>
+    </labels>
+    <labels>
+        <fullName>SaveBtn</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Displayed on configure no. admin page.</shortDescription>
+        <value>Save</value>
+    </labels>
+    <labels>
+        <fullName>ScreenPopNoRecordsDescriptionLbl</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Displayed on configure no. admin page.</shortDescription>
+        <value>If no records for the record types listed in the &apos;Selected record types&apos; selector above match the phone number of the inbound text, a new record of the following record type will pop. If &quot;No Record Type&quot; is selected then the Details tab will be displayed.</value>
+    </labels>
+    <labels>
+        <fullName>ScreenPopNoRecordsHeaderLbl</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Displayed on configure no. admin page.</shortDescription>
+        <value>Choose what is popped when no matching records are found after an inbound text is accepted.</value>
+    </labels>
+    <labels>
+        <fullName>ScreenPopNoRecordsLbl</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Displayed on configure no. admin page.</shortDescription>
+        <value>No Records Found</value>
+    </labels>
+    <labels>
+        <fullName>ScreenPopOptionsLbl</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Displayed on configure no. admin page.</shortDescription>
+        <value>Screen pop Options</value>
+    </labels>
+    <labels>
+        <fullName>ScreenPopWithRecordsDescriptionLbl</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Displayed on configure no. admin page.</shortDescription>
+        <value>Records must include or be linked with the phone number of the inbound text to be popped. If no record types are selected, the &apos;Details&apos; tab will be popped instead. The most recently modified record will be popped IF multiple records of the same type matching the inbound text phone number are found.</value>
+    </labels>
+    <labels>
+        <fullName>ScreenPopWithRecordsHeaderLbl</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Displayed on configure no. admin page.</shortDescription>
+        <value>Choose the order that LiveText will pop records to LiveText agents after an inbound text is accepted.</value>
+    </labels>
+    <labels>
+        <fullName>ScreenPopWithRecordsLbl</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Displayed on configure no. admin page.</shortDescription>
+        <value>Records Found</value>
+    </labels>
+    <labels>
+        <fullName>SearchLbl</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Displayed on configure no admin page.</shortDescription>
+        <value>Search :</value>
+    </labels>
+    <labels>
+        <fullName>SelectPhoneNoShortCodeLbl</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Displayed on batch job configuration page.</shortDescription>
+        <value>-- Select phone number / short code --</value>
+    </labels>
+    <labels>
+        <fullName>SelectedMembersLbl</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Displayed on configure no admin page.</shortDescription>
+        <value>Selected Users</value>
+    </labels>
+    <labels>
+        <fullName>SelectedRecordTypesLbl</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Displayed on configure no admin page.</shortDescription>
+        <value>Selected Record Types</value>
+    </labels>
+    <labels>
+        <fullName>SendingRequestLbl</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Displayed in the conversation pane.</shortDescription>
+        <value>Sending a request for an image...</value>
+    </labels>
+    <labels>
+        <fullName>SessionTimeout</fullName>
+        <categories>Browser notification</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Browser notification message for session timeout.</shortDescription>
+        <value>Your session has expired. Please reload page.</value>
+    </labels>
+    <labels>
+        <fullName>SessionTimeoutTitle</fullName>
+        <categories>Widget Error</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Title for session timeout error message.</shortDescription>
+        <value>Expired Session</value>
+    </labels>
+    <labels>
+        <fullName>StartChatLbl</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Displayed on detail tab of Conversation Header page.</shortDescription>
+        <value>---- Start Text Session ----</value>
+    </labels>
+    <labels>
+        <fullName>StatusLbl</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Displayed on detail tab of Conversation Header page.</shortDescription>
+        <value>Status/Stage</value>
+    </labels>
+    <labels>
+        <fullName>SupportNumberConfLbl</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Label for Support Number Conf section on admin page.</shortDescription>
+        <value>Phone Number Configurations</value>
+    </labels>
+    <labels>
+        <fullName>SupportNumberLbl</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Label for Support Number pageblock table header</shortDescription>
+        <value>Phone Number / Shortcode</value>
+    </labels>
+    <labels>
+        <fullName>SupportNumberReqValMsg</fullName>
+        <categories>Error Message</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Displayed on configure no admin page.</shortDescription>
+        <value>Phone Number and Phone Label are required fields.</value>
+    </labels>
+    <labels>
+        <fullName>TXT_Account</fullName>
+        <categories>TXT</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Account</shortDescription>
+        <value>Account</value>
+    </labels>
+    <labels>
+        <fullName>TXT_AdminEmail</fullName>
+        <categories>TXT</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Administrator email</shortDescription>
+        <value>support@hwlivetext.com</value>
+    </labels>
+    <labels>
+        <fullName>TXT_Case</fullName>
+        <categories>TXT</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Case</shortDescription>
+        <value>Case</value>
+    </labels>
+    <labels>
+        <fullName>TXT_Chat_Started</fullName>
+        <categories>TXT</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Chat Started displayed on transcripts page</shortDescription>
+        <value>Text Session Started</value>
+    </labels>
+    <labels>
+        <fullName>TXT_Contact</fullName>
+        <categories>TXT</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Contact</shortDescription>
+        <value>Contact</value>
+    </labels>
+    <labels>
+        <fullName>TXT_Conversation</fullName>
+        <categories>Text</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Conversation</shortDescription>
+        <value>Conversation</value>
+    </labels>
+    <labels>
+        <fullName>TXT_ITR_Started</fullName>
+        <categories>TXT</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>ITR Started displayed on transcripts page</shortDescription>
+        <value>ITR Started</value>
+    </labels>
+    <labels>
+        <fullName>TXT_Lead</fullName>
+        <categories>TXT</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Lead</shortDescription>
+        <value>Lead</value>
+    </labels>
+    <labels>
+        <fullName>TXT_LiveText</fullName>
+        <categories>Text</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>LiveText</shortDescription>
+        <value>LiveText</value>
+    </labels>
+    <labels>
+        <fullName>TXT_New_Account</fullName>
+        <categories>Text</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>New Account</shortDescription>
+        <value>New Account</value>
+    </labels>
+    <labels>
+        <fullName>TXT_New_Case</fullName>
+        <categories>Text</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>New Case</shortDescription>
+        <value>New Case</value>
+    </labels>
+    <labels>
+        <fullName>TXT_New_Contact</fullName>
+        <categories>Text</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>New Contact</shortDescription>
+        <value>New Contact</value>
+    </labels>
+    <labels>
+        <fullName>TXT_New_Lead</fullName>
+        <categories>Text</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>New Lead</shortDescription>
+        <value>New Lead</value>
+    </labels>
+    <labels>
+        <fullName>TXT_New_Opportunity</fullName>
+        <categories>Text</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>New Opportunity</shortDescription>
+        <value>New Opportunity</value>
+    </labels>
+    <labels>
+        <fullName>TXT_OPT_Messaging</fullName>
+        <categories>TXT</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Opt-in / Opt-out messaging on transcripts page</shortDescription>
+        <value>Opt-in / Opt-out messaging</value>
+    </labels>
+    <labels>
+        <fullName>TXT_Opportunity</fullName>
+        <categories>TXT</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Opportunity</shortDescription>
+        <value>Opportunity</value>
+    </labels>
+    <labels>
+        <fullName>TXT_Tabs</fullName>
+        <categories>TXT</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Tabs</shortDescription>
+        <value>Tabs</value>
+    </labels>
+    <labels>
+        <fullName>TXT_Transcript_auto_linked_prefix</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Auto-linked prefix</shortDescription>
+        <value>&lt;i&gt;&gt;&gt;&gt; Auto-linked</value>
+    </labels>
+    <labels>
+        <fullName>TXT_Transcript_linked_prefix</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Linked prefix</shortDescription>
+        <value>&lt;i&gt;&gt;&gt;&gt; Linked</value>
+    </labels>
+    <labels>
+        <fullName>TXT_Transcript_linked_unlinked_postfix</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Linked/Unliked postfix</shortDescription>
+        <value>&lt;&lt;&lt; &lt;/i&gt;</value>
+    </labels>
+    <labels>
+        <fullName>TXT_Transcript_options</fullName>
+        <categories>TXT</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>LiveText Transcript Options</shortDescription>
+        <value>LiveText Transcript Options</value>
+    </labels>
+    <labels>
+        <fullName>TXT_Transcript_time_format</fullName>
+        <categories>TXT</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>time format.</shortDescription>
+        <value>yyyy-MM-dd HH:mm:ss</value>
+    </labels>
+    <labels>
+        <fullName>TXT_Transcript_unlinked_prefix</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Unlinked prefix</shortDescription>
+        <value>&lt;i&gt;&gt;&gt;&gt; Unlinked</value>
+    </labels>
+    <labels>
+        <fullName>TXT_Workspace_options</fullName>
+        <categories>TXT</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>LiveText Session Workspace Options</shortDescription>
+        <value>LiveText Session Workspace Options</value>
+    </labels>
+    <labels>
+        <fullName>TXT_Workspace_options_header</fullName>
+        <categories>TXT</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Workspace Options Header</shortDescription>
+        <value>Choose the records or pages to open as subtabs of each text session:</value>
+    </labels>
+    <labels>
+        <fullName>TextSessionAccepted</fullName>
+        <categories>Error Message</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Browser alert message for accepting accepted text session.</shortDescription>
+        <value>This text session was accepted by another user.</value>
+    </labels>
+    <labels>
+        <fullName>TextSessionReuseTimeMsg</fullName>
+        <categories>Error Message</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Text Session Reuse Time Error message</shortDescription>
+        <value>Text Session Reuse Time (seconds): Invalid number</value>
+    </labels>
+    <labels>
+        <fullName>Text_Session_Label</fullName>
+        <categories>TXT</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Text Session</shortDescription>
+        <value>Text Session</value>
+    </labels>
+    <labels>
+        <fullName>TitleLbl</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Displayed on detail tab of Conversation Header page.</shortDescription>
+        <value>Title</value>
+    </labels>
+    <labels>
+        <fullName>Txt_Time_In_Queue</fullName>
+        <categories>Text</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Time in queue</shortDescription>
+        <value>Time in queue:</value>
+    </labels>
+    <labels>
+        <fullName>UnsupportedFileFormatMMS</fullName>
+        <categories>Error Message</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Displayed if agent select unsuported file in MMS.</shortDescription>
+        <value>The selected file is not a supported image type. Please select a different file.</value>
+    </labels>
+    <labels>
+        <fullName>UnvalidatedPhNoMsg</fullName>
+        <categories>Error Message</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Displayed on configure no admin page.</shortDescription>
+        <value>Phone Number cannot be validated by LiveText. All phone numbers must be registered with HeyWire Business. Please contact LiveText support at http://support.hwlivetext.com</value>
+    </labels>
+    <labels>
+        <fullName>ValidatedLbl</fullName>
+        <categories>Label</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Label for Validated pageblock table header</shortDescription>
+        <value>Validated</value>
+    </labels>
+</CustomLabels>

@@ -1,0 +1,60 @@
+<apex:page controller="QuickTextController">
+    <c:ScriptsComponent id="scmp"/>
+    <apex:includeScript value="/soap/ajax/31.0/connection.js"/>
+    <apex:includeScript value="/support/console/31.0/integration.js"/>
+    <apex:form >
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+        <apex:stylesheet value="{!URLFOR($Resource.Framework, 'framework/css/bootstrap.css')}"/>
+        <apex:stylesheet value="{!URLFOR($Resource.Framework, 'framework/css/bootstrap-responsive.css')}"/>
+        <apex:stylesheet value="{!URLFOR($Resource.Framework, 'framework/css/bootstrap.min.css')}"/>
+        <apex:includeScript value="{!URLFOR($Resource.Framework, 'framework/js/bootstrap.min.js')}"/>
+        <apex:stylesheet value="{!URLFOR($Resource.Framework, 'framework/js/bootstrap.css')}"/>
+        <script>
+            $(document).ready(function(){
+                var $rows = $('#table tr');
+
+                $('#search').keyup(function() {
+                    var val = $.trim($(this).val()).replace(/ +/g, ' ').toLowerCase();
+                    $rows.show().filter(function() {
+                      var text = $(this).text().replace(/\s+/g, ' ').toLowerCase();
+                      return !~text.indexOf(val);
+                    }).hide();
+                });
+
+                function setFocusOnLoad() {
+
+                    j$("#textarea").attr('autofocus', 'autofocus');
+                    
+                }
+
+                onload=setFocusOnLoad; 
+
+            });
+
+            //fires on selection of quicktext message
+            function clickedRow(tableRow) {
+                sforce.console.getFocusedPrimaryTabId( function(result) {
+                var messageObj = {};
+                    messageObj['currentPrimaryTabID'] = result.id; 
+                    messageObj['selectedMessage'] = tableRow;
+                    fireCustomEvent('textAreaChanged',JSON.stringify(messageObj));
+                });  
+            }
+
+            function fireCustomEvent(name, data){   
+                sforce.console.fireEvent(name, data, function(result){
+                });
+            }
+
+        </script>
+        <input type="text" id="search" placeholder="QuickText Search" style="margin: 8px 0px 8px 0px;min-width: 98%;"/> 
+        <table id="table" class="table table-hover">
+            <apex:repeat value="{!results}" var="r">
+                <tr style="cursor: pointer;">
+                    <td onclick="clickedRow('{!JSENCODE(r.Message)}');">{!r.Name}</td>
+                    <td onclick="clickedRow('{!JSENCODE(r.Message)}');">{!r.Message}</td>
+                </tr>
+            </apex:repeat>
+        </table>
+    </apex:form>
+</apex:page>

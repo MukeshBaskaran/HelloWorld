@@ -1,0 +1,2503 @@
+<apex:page standardController="Conversation_Session__c"
+    extensions="LiveTextChatController" >
+    <c:ScriptsComponent id="scmp" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"></meta>
+    <apex:pageMessages id="lt_pageMessages" />
+    <apex:stylesheet value="{!URLFOR($Resource.Framework, 'framework/css/bootstrap.min.css')}" />
+    <apex:includeScript value="{!URLFOR($Resource.Framework, 'framework/js/bootstrap.min.js')}" />
+    <apex:includeScript value="{!URLFOR($Resource.LiveText, 'js/forcetk.js')}" />
+    <apex:includeScript value="/soap/ajax/36.0/connection.js" />
+    <apex:includeScript value="/support/console/36.0/integration.js" />
+    <apex:includeScript value="{!URLFOR($Resource.LiveText, '/js/libphonenumber.js')}" />
+    <apex:includeScript value="{!URLFOR($Resource.LiveText, '/js/livetextglobal.js')}" />
+        
+    <style type="text/css">
+#removeAttachedImage{
+    display: none;
+}
+
+
+#textarea {
+    min-width: 98% !important;
+}
+
+#attachOptionsArea {
+    display: none;
+    height: 75px;
+    border-top: 1px solid #b8c1c4;
+}
+
+#attachOptionsArea div {
+    cursor: hand;
+    cursor: pointer;
+    vertical-align: middle;
+    text-align: center;
+    color: black;
+    line-height: 35px;
+    border-bottom: 1px solid #b8c1c4;
+}
+
+.itr {
+    color: #666;
+    display: inline !important;
+    font-weight: bold;
+    font-style: italic;
+}
+
+<apex:repeat value="{!customObjectsForManualLinking}" var="element">
+  .{!element.recordType}ImgForManualLinking
+    {
+      background: transparent url({!IF(ISBLANK(element.iconUrl),URLFOR($Resource.LiveText,'images/LTicon32.png'),element.iconUrl)}) !important;
+      background-repeat: no-repeat;
+      display: inline-block;
+      height: 30px;
+      line-height: 14px;
+      margin-top: 1px;
+      vertical-align: text-top;
+      width: 30px;
+    }
+
+</apex:repeat>
+
+
+</style>
+
+<Script type="text/javascript">
+    Visualforce.remoting.timeout = 120000;
+
+    var acceptedError = false;
+    var maxStringSize = 6000000;
+    var maxFileSize = 2100000; // 2 mb plus small buffer
+    var cameraImg = "{!URLFOR($Resource.LiveText,'images/pictureattachicon.png')}";
+
+    var sentMMSText = '';
+    var mostRecentOriginatingNumberError = '';
+    var currentTabId;
+    var currentSubTabId;
+    var focusedSubTabId = null;
+    var objectId = '';
+    var objectPrefix = null;
+    var locale = 'en_US';
+    var agentLocale = 'US';
+    var isPhoneInvalid = true;
+
+    var newSubTabsMap = {};
+    var primaryTabId = null;
+    var startPollingSubTab = null;
+    var setIntervalId = null;
+    var timerIdVariable = null;
+    var username = '{!JSENCODE(userName)}';
+    var initialMessage = '{!JSENCODE(initialMessage)}';
+    var namespace = '{!JSENCODE(nameSpace)}';
+    var source = namespace + '{!JSENCODE(source)}';
+
+    var fldFormattedOriginatingNumber = namespace + 'Formatted_Originating_Number__c';
+    var fldOriginatingNumber = namespace + 'Originating_Number__c';
+    var fldMessage = namespace + 'Message__c';
+    var fldSupportNumberprefix = namespace + 'Support_Number__r';
+    var fldSupportNumberpostfix = namespace + 'Number__c';
+    var fldStatus = namespace + 'Status__c';
+    var fldConversationType = namespace + 'ConversationType__c';
+    var fldSource = namespace + 'Source__c';
+    var fldCaseNumber ='CaseNumber';
+    var fldName = 'Name';
+    var fldId = 'Id';
+
+    var fldConvHeader = namespace + 'Conversation_Header__c';
+    var liveText = '{!JSENCODE(liveText)}';
+    var fldSentToCustomer = namespace + 'Sent_To_Customer__c';
+    var fldConvHeaderStatus = namespace + 'Status__c';
+    var currentConversationRecordId = null;
+    var originalPhoneNumber = null;
+    var isFirstOutboundMessage = false;
+    var originalPagePhoneNumber = '';
+    var flag = true;
+    var ConversationInitialization;
+    var MessagePayload;
+    var sendingRequestMessage = '{!$Label.SendingRequestLbl}';
+    var conversationRecords = null;
+
+    var chatMsgCounter = 0;
+    var casePrefixURL = '{!casePrefixURL}';
+    var opportunityPrefixURL = '{!opportunityPrefixURL}';
+    var afterEnter = false;
+    var convHeaderStatus;
+    var conversationShouldTurnRedMap = new Object();
+    var conversationAlertOn = false;
+
+    var chatMsgCounter=0;
+    var conversationLoadError = false;
+    var previousContactId = null;
+    var previousAccountId = null;
+
+    var sessionTimeoutOccured = false;
+    var customLookup;
+    var newCaseAfterAutolinking = true;
+
+    /*All custom object fields
+      0 =No, 1=Yes, 2=Refresh*/
+    <apex:repeat value="{!customObjectsForManualLinking}" var="element">
+        var is{!element.recordType}CheckBoxVisible = 0;
+        var {!element.recordType}Name = '{!element.recordName}';
+        var {!element.recordType}Id = '{!element.recordId}';
+        var fldRef{!element.recordType} = '{!element.relationshipName}';
+        var fld{!element.recordType} = '{!element.recordType}';
+        var {!element.recordType}Label = '{!element.recordLabel}';
+        var {!element.recordType}Icon = '{!element.iconUrl}';
+        var {!element.recordType}MiniIcon = '{!element.miniIconUrl}';
+    </apex:repeat>
+
+    function isNullOrEmpty(obj){
+        return obj == null || obj == 'null' || obj == '';
+    }
+
+    function showConnectivityError(){
+        sforce.console.fireEvent('ConversationSessionExpired','[]', function(){} );
+    }
+
+    function endChatAction(conversationId){
+        try{
+            console.log('Chat Page Testing for Sfdc.provide in endChatAction');
+            Sfdc.provide("SfdcApp.Visualforce.VSManager",{});
+        }
+        catch(e){
+             console.log('reloadConversationFromServer Error:' +e);
+             if(e.message.indexOf('Sfdc.provide is not a function') >= 0){
+                 sessionTimeoutOccured = true;
+                  showConnectivityError();
+                      return;
+             }
+        }
+        _endChatAction(conversationId);
+    }
+
+    //this function returns phone in national/international format (for valid phones) - only for outbound conversation
+    function phoneFormatter(phone, locale){
+        displayOriginatingNumberError('');
+        var phoneStartsWithPlus = false;
+        if(!phone){
+            isPhoneInvalid = true;
+            return null;
+        }
+        if(phone.startsWith('+'))
+            phoneStartsWithPlus = true;
+        phone = phone.replace(/\D/g,'');
+        if(phone.length < 8 || phone.length > 17){
+            displayOriginatingNumberError("{!$Label.PhoneNoLengthMsg}");
+            j$('[id$=originatingNumber]').text(phone);
+            isPhoneInvalid = true;
+            return phone;
+        }
+        var phoneUtil = i18n.phonenumbers.PhoneNumberUtil.getInstance();
+        var userLocale = locale;
+        userLocale = userLocale.search("_") ? userLocale.substring(userLocale.lastIndexOf("_")+1) : userLocale;
+        var number;
+        //if userLocale is US and phone starts with 1 and it's 11 digit long check if adding + will work
+        if(userLocale == "US" && phone.length == 11 && phone.startsWith("1") && !phoneStartsWithPlus){
+            try{
+                number = phoneUtil.parseAndKeepRawInput("+" + phone);
+            }catch(err){
+                console.log('its not an US number');
+            }
+        }
+        phone = phoneStartsWithPlus ? '+' + phone : phone;
+        //adding country code if there is none
+        if(!number){
+            try{
+                number = phoneStartsWithPlus ? phoneUtil.parseAndKeepRawInput(phone) : phoneUtil.parseAndKeepRawInput(phone, userLocale); 
+            }catch(err){
+                j$('[id$=originatingNumber]').text(phone);
+                isPhoneInvalid = true;
+                return phone;
+            }
+        }
+        var LTphoneNumber = getActiveSupportNumber();
+        var LTNumberlocale = "US";
+        if(LTphoneNumber.length > 6 ){
+            if(!LTphoneNumber.startsWith('+'))
+                LTphoneNumber = '+' + LTphoneNumber;
+            var LTnumber = phoneUtil.parseAndKeepRawInput(LTphoneNumber);
+            LTNumberlocale = phoneUtil.getRegionCodeForNumber(LTnumber)
+        }
+               
+        if(phoneUtil.isValidNumber(number)){
+            
+            var numberLocale = phoneUtil.getRegionCodeForNumber(number);
+            
+            isPhoneInvalid = false;
+            
+            // Check if the user is attempting to send internationally with a short code
+       		if(isShortCode(LTphoneNumber) && numberLocale != LTNumberlocale){
+    			displayOriginatingNumberError("{!$Label.InternationalShortCodeTextingError}");
+    			isPhoneInvalid = true;
+    		}
+    		
+    		// Store E164 format of number to use in messaging
+            j$('[id$=originatingNumber]').text(phoneUtil.format(number, i18n.phonenumbers.PhoneNumberFormat.E164));
+            
+            // Display number in national format if all the following match:
+            // The country code of the LiveText number
+    		// The country code of the Recipient's phone number
+    		// The country code of the LiveText Agent
+            if(numberLocale == LTNumberlocale && numberLocale == agentLocale){
+                return phoneUtil.format(number, i18n.phonenumbers.PhoneNumberFormat.NATIONAL);
+            }
+            
+            // otherwise, display in international format
+            return phoneUtil.format(number, i18n.phonenumbers.PhoneNumberFormat.INTERNATIONAL);
+        }else{
+            console.log('Phone is invalid: ' + phone);
+            disableSendButton();
+            displayOriginatingNumberError("{!$Label.PhoneIsInvalidError}");
+            isPhoneInvalid = true;
+            j$('[id$=originatingNumber]').text(phone);
+            return phone;
+        }
+    }
+
+    //this function returns phone in E164 format (for valid phones)
+    function phoneE164Formatter(phone){
+        var phoneUtil = i18n.phonenumbers.PhoneNumberUtil.getInstance();
+        var num;
+        var phone = phone.replace(/[^0-9\+]/g,'');
+        if(!num){
+            try{
+                num = phoneUtil.parseAndKeepRawInput(phone);
+            }catch(err){
+                console.log('\'Number\' cannot be created');
+                return phone;
+            }
+        }
+        if(phoneUtil.isValidNumber(num)){
+            return phoneUtil.format(num, i18n.phonenumbers.PhoneNumberFormat.E164);
+        }
+        console.log('Phone is not valid');
+        return phone;
+     }
+
+     //this function returns phone in International format (for valid phones)
+     function phoneInternationalFormatter(phone){
+        var phoneUtil = i18n.phonenumbers.PhoneNumberUtil.getInstance();
+        var num;
+        var phone = phone.replace(/[^0-9\+]/g,'');
+        try{
+            num = phoneUtil.parseAndKeepRawInput(phone); 
+        }catch(err){
+            console.log('\'Number\' cannot be created');
+            return phone;
+        }
+        if(phoneUtil.isValidNumber(num)){
+            return phoneUtil.format(num, i18n.phonenumbers.PhoneNumberFormat.INTERNATIONAL);
+        }
+        console.log('Phone is not valid');
+        return phone;
+     }
+
+     function formatDisplayedPhoneField(phoneToFormat){
+        //For Inbound text always recipient field should be in International format
+        if(j$('[id$="hiddenconvtype"]').text() != 'Inbound'){
+            if(phoneToFormat){
+                j$('[id$="originatingFormattedNumber"]').val(phoneFormatter(phoneToFormat, locale));
+            }else{
+                j$('[id$="originatingFormattedNumber"]').val(phoneFormatter(j$('[id$="originatingNumber"]').text(), locale));
+            }
+
+        }else{
+            j$('[id$="originatingFormattedNumber"]').val(phoneInternationalFormatter(j$('[id$="originatingNumber"]').text()));
+        }
+     }
+
+    //for forcetk
+    var client = new forcetk.Client();
+    client.setSessionToken('{!$Api.Session_ID}');
+
+    sforce.SoapTransport.prototype.onFailure = function(res, writer) {
+        var resString = JSON.stringify(res);
+        var isSessionError = resString.indexOf('Remote invocation failed') >= 0 || resString.indexOf('INVALID_SESSION') >= 0;
+        var isInvalidTypeError = resString.indexOf('INVALID_TYPE') >= 0;
+        if(isSessionError){
+            sessionTimeoutOccured = true;
+            showConnectivityError();
+            console.log('CHAT PAGE SESSION TIMED OUT DUE TO SoapTransport.prototype.onFailure: ' + resString);
+          }
+        else if (!isInvalidTypeError){
+
+            alert("Error: " + res);
+          }
+    };
+
+    j$(document).ajaxError(function( event, request, settings ) {
+        if(!sessionTimeoutOccured){
+            console.log('Chat Page Ajax error.');
+            if(settings != null && request != null){
+                console.log('Chat Page Error requesting ' + settings.url + ': ' + request.status + ' ' + request.statusText);
+            }
+
+            var isAjaxDisconnect = (request != null && (request.status == 0 || request.status == 401));
+            if(isAjaxDisconnect) {
+                sessionTimeoutOccured = sessionTimeoutOccured || request.status == 401;
+                if(sessionTimeoutOccured){
+                showConnectivityError();
+                }
+            }
+        }
+    });
+
+    var originalOnError = Visualforce.remoting.Util.error;
+    Visualforce.remoting.Util.error = function(a,b){
+        if (b&&(b.message.indexOf('Logged in?')!==-1)){
+            sessionTimeoutOccured = true;
+             console.log('CHAT PAGE SESSION TIMED OUT DUE TO LOGGED IN ERROR');
+            showConnectivityError();
+        }else{
+            originalOnError && originalOnError(a,b);
+        }
+    };
+
+    /**
+    * This function fills newSubtTabMap key: edit prefix (/000/e - Account) -> subTabId
+    */
+    <apex:repeat value="{!customObjectKeyPrefixesForEditPages}" var="element">
+      newSubTabsMap['{!element}'] = null;
+    </apex:repeat>
+
+    /**
+    *    This function sets the contact Name on the New case subtab detail page to the contactID selected from the paper clip.
+    */
+    var reloadNewCaseSubTab = function(){
+        //move it to different vars and base logic on prefix
+        console.log('reloadNewCaseSubTab, ContactId: ' + ContactId + ', AccountId: ' + AccountId);
+        var newCaseSubTabId = newSubTabsMap['/500/e'];
+        if(newCaseSubTabId != null){
+            var newCaseUrl = casePrefixURL;
+            if (ContactId != null)  newCaseUrl += 'cas3_lkid='+ContactId + '&';
+            if (AccountId != null)  newCaseUrl += 'cas4_lkid='+AccountId + '&';
+            sforce.console.setTabUnsavedChanges(newCaseAfterAutolinking, function(){
+            }, newCaseSubTabId);
+            newCaseAfterAutolinking = true;
+            sforce.console.openSubtab(primaryTabId,newCaseUrl,false,'New ' + CaseLabel,newCaseSubTabId,function(result){
+              if (result.success == true) {
+                 newCaseSubTabId = result.id;
+                 sforce.console.setTabIcon(CaseMiniIcon,result.id);
+               } else {
+                   console.log('Failed to set the Contact Name field on the New case subtab');
+               }
+           });
+        }
+    };
+
+    /**
+    *    This function sets the contact Name on the New case subtab detail page to the contactID selected from the paper clip.
+    */
+    var reloadNewOpportunitySubTabAccountData = function(){
+        var newOppSubTabId = newSubTabsMap['/006/e'];
+        if(newOppSubTabId != null){
+            if(AccountId != null){
+                    sforce.console.openSubtab(primaryTabId,opportunityPrefixURL+'accid='+AccountId,false,'New ' + OpportunityLabel,newOppSubTabId,function(result){
+                    if (result.success == true) {
+                            newOppSubTabId = result.id;
+                                sforce.console.setTabIcon(OpportunityIcon,result.id);
+                            } else {
+                                console.log('Failed to set the Account Name field on the New opportunity subtab');
+                            }
+                    });
+                }
+            }
+    };
+
+    /**
+        * This function gets the pageInfo for the passed tabId argument and checks if it is a new Subtab. If yes it calls the startPollingSubTab method with the tabId as
+        *    argument.
+        * @param tabId tabdId of the current focused subtab
+        * @return No return value.
+        */
+    function checkPageInfoFuncn(tabId){
+        sforce.console.getPageInfo(tabId, function(result){
+            var resultObjVariable =  JSON.parse(result.pageInfo);
+            var pageUrl = resultObjVariable.url;
+            var objectId = resultObjVariable.objectId
+            for(var key in newSubTabsMap){
+                if (newSubTabsMap.hasOwnProperty(key)) {
+                    if(objectId == null && (pageUrl.indexOf(key)!= -1)){
+                        newSubTabsMap[key] = tabId;
+                        startPollingSubTab(tabId);
+                    }
+                }
+            }
+        });
+    };
+
+    var getFocusedSubtabFuncn = function(){
+        sforce.console.getFocusedSubtabId(function(result){
+            focusedSubTabId = result.id;
+            checkPageInfoFuncn(focusedSubTabId);
+        });
+    };
+
+    /**
+        * This function loops through the all subTabIds present in the current primary Tab and assigns to the variables
+        *    newAccSubTabId and etc..If a subTab already has object created that variable will be null..
+        * @param tabId tabdId of the current focused subtab
+        * @return No return value.
+        */
+    function refreshTabIds(callback){
+        sforce.console.getEnclosingPrimaryTabId(function(result){
+            primaryTabId = result.id;
+            sforce.console.getSubtabIds(primaryTabId,function(result){
+                var subTabIds = result.ids;
+                var x=0;
+                var loopArray = function(arr){
+                    findNewSubtabID(subTabIds[x],function(){
+                        x++;
+                        if(x<arr.length){
+                            loopArray(arr);
+                        }else{
+                            callback();
+                        }
+                    });
+                };
+                loopArray(subTabIds);
+            });
+        });
+    }
+
+    /**
+    *    This is a helper function called by refreshTabIds to refresh the latest values for the variables
+    *    newAccSubtab and etc..
+    */
+    function findNewSubtabID(tempTabId,callback){
+        sforce.console.getPageInfo(tempTabId,function(result){
+            var resultObjVariable =  JSON.parse(result.pageInfo);
+            var pageUrl = resultObjVariable.url;
+            var objectId = resultObjVariable.objectId
+            for(var key in newSubTabsMap){
+                if (newSubTabsMap.hasOwnProperty(key)) {
+                     if(objectId == null && (pageUrl.indexOf(key)!= -1)){
+                        newSubTabsMap[key] = tempTabId;
+                    }
+                }
+            }
+            callback();
+        });
+    }
+
+    function enableCheckBox(cb, enable){
+        if(cb != null){
+            if(enable){
+                cb.removeAttr("disabled");
+            }else{
+                cb.attr("disabled", true);
+            }
+        }
+    }
+
+    function handleLinkRecordsClicked(prefix, id, checked){
+        linkRecords(currentConversationRecordId, prefix, id, checked);
+        if(prefix == '003'){
+            ContactId = checked ? id : null;
+            refreshTabIds(reloadNewCaseSubTab);
+            setTimeout(function(){ContactId = id;}, 1500)
+        }else if(prefix == '001'){
+            AccountId = checked ? id : null;
+            refreshTabIds(reloadAccountDependentSubTabs);
+            setTimeout(function(){AccountId = id;}, 1500)
+        }
+    }
+
+    function isEndedConversation(){
+        return  getConvHeaderStatus() === 'Ended';
+    }
+
+    function reloadAccountDependentSubTabs(){
+        reloadNewOpportunitySubTabAccountData();
+        reloadNewCaseSubTab();
+    }
+
+    function reloadCaseTab(htmlObj){
+        var prefix = j$(htmlObj).attr('objectprefix');
+        var id = j$(htmlObj).attr('objectid');
+        var linked = j$(htmlObj).attr('linked');
+        if(prefix == '003'){
+            ContactId = linked ? id : null;
+            refreshTabIds(reloadNewCaseSubTab);
+        }else if(prefix == '001'){
+            AccountId = linked ? id : null;
+            refreshTabIds(reloadAccountDependentSubTabs);
+        }
+    }
+
+    function fireLookup(msg){
+        customLookup.close();
+        var msgObj = JSON.parse(msg);
+        sforce.console.getEnclosingPrimaryTabId(function(result){
+            msgObj['currentPrimaryTabID'] = result.id;
+            msgObj['currentConversationRecordId'] = currentConversationRecordId;
+            sforce.console.fireEvent( 'recordLinkedFromChat', JSON.stringify(msgObj), function(){} );
+        });
+        //reloadCaseTab(msgObj);
+    }
+
+    if(!isEndedConversation()){
+        disableEndSessionButton();
+    }
+
+
+    function getSafeParameterByName(name, search){
+        var val = getParameterByName(name, search);
+        return (val == null || val == 'null') ? "" : val;
+    }
+
+    function getParameterByName(name, search) {
+        name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
+        var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
+        results = regex.exec(search);
+        var ret = results === null ? null : decodeURIComponent(results[1].replace(/\+/g, " "));
+        return (ret === 'null') ? null : ret;
+    }
+
+    function getUrlParameterNames(url){
+        var ix = url.indexOf('?');
+        if(ix >= 0){
+            url = url.substring(ix+1);
+            var pairs = url.split('&');
+            var params = [];
+            for(var i=0;i<pairs.length;i++){
+                params[i] = pairs[i].split('=')[0];
+            }
+            return params;
+        }
+        return [];
+    }
+
+    function displayOriginatingNumberError(msg){
+        j$('[id$=originatingNumberError]').text(msg);
+        if(msg.length > 0){
+        	mostRecentOriginatingNumberError = msg;
+      	}
+    }
+
+    function getPrimaryTabDetails(callback){
+        sforce.console.getEnclosingPrimaryTabId(function(result) {
+            sforce.console.getSubtabIds(result.id , function(result){
+                var firstSubTabId = result.ids[0];
+                sforce.console.getPageInfo(firstSubTabId , function(result){
+                        primaryTabId = result.id;
+                        var resultObj =  JSON.parse(result.pageInfo);
+                        callback(resultObj);
+                });
+            });
+        });
+    }
+
+    function setFocusOnLoad() {
+        j$("#textarea").attr('autofocus', 'autofocus');
+    }
+
+    onload = setFocusOnLoad;
+
+    function getCookie(cname)
+    {
+        var name = cname + "=";
+        var ca = document.cookie.split(';');
+        for(var i = 0; i <ca.length; i++)
+        {
+            var c = ca[i];
+            while (c.charAt(0)==' ')
+            {
+                c = c.substring(1);
+            }
+            if (c.indexOf(name) == 0)
+            {
+                return c.substring(name.length,c.length);
+            }
+        }
+        return "";
+    }
+
+    function initializeFromPrimaryTab(){
+        getPrimaryTabDetails(function(resultObj) {
+            var pageUrl = resultObj.url;
+            currentConversationRecordId = getParameterByName('cvid', pageUrl);
+            objectId = getSafeParameterByName('oid', pageUrl);
+            var ownerId = getSafeParameterByName('ownerId', pageUrl);
+            j$('[id$=originatingNumber]').text(getSafeParameterByName('phone', pageUrl));
+            
+            // first get agent's locale
+             Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.LiveTextChatController.getProperLocale}',
+                '',
+                ownerId,
+                function(result, event) {
+                    if(result != null){
+                        agentLocale = result.search("_") ? result.substring(result.lastIndexOf("_")+1) : result;
+                    }
+                }
+            );
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.LiveTextChatController.getProperLocale}',
+                objectId,
+                ownerId,
+                function(result, event) {
+                    if(result != null){
+                        locale = result;
+                    }
+                    j$('[id$=originatingFormattedNumber]').val(phoneInternationalFormatter(getSafeParameterByName('phone', pageUrl)));
+                    objectPrefix = getSafeParameterByName('objectprefix', pageUrl);
+                    //originatingNumber needs to be E164!!
+                    originalPhoneNumber = phoneE164Formatter(getSafeParameterByName('phone', pageUrl));
+
+                    //reload of outbound conversation
+                    if(!originalPhoneNumber && !currentConversationRecordId){
+                        originalPhoneNumber = phoneE164Formatter(getCookie('phone'));
+                        j$('[id$=originatingNumber]').text(originalPhoneNumber);
+                        j$('[id$=originatingFormattedNumber]').val(phoneFormatter(originalPhoneNumber), locale);
+                        currentConversationRecordId = getCookie('cvid');
+                    }
+
+                    if(currentConversationRecordId){
+                        sforce.connection.sessionId = '{!$Api.Session_ID}';
+                        var soqlQuery = 'Select id, {!nameSpace}Status__c, {!nameSpace}Formatted_Transcript_1__c,  {!nameSpace}AcceptedBy__c FROM {!nameSpace}Conversation_Header__c WHERE Id =\''+currentConversationRecordId+'\' Limit 1';
+                        sforce.connection.query(soqlQuery, function(result){
+                            hideLoadingProgress();
+                            if(result == null || result['records'] == null || result['records']['{!nameSpace}AcceptedBy__c'] != '{!$User.Id}' ){
+                                if(result != null && result['records'] != null && result['records']['{!nameSpace}Formatted_Transcript_1__c'] != null && result['records']['{!nameSpace}AcceptedBy__c'] == null){
+                                    //This part is executed only when user refreshes conversation page, and conversation is reopened
+                                    conversationLoadError = true;
+                                    disableChatButtons(true);
+                                    unlockMainTab();
+                                }else{
+                                    //This part is executed when other user accepted new (not reopened) text session
+                                    conversationLoadError = true;
+                                    disableChatButtonsAcceptedError(true);
+                                    acceptedError = true;
+                                    unlockMainTab();
+                                }
+                            }else if(result['records']['{!nameSpace}Status__c'] == "Ended"){
+                                //This part is executed when user refreshes page after ending conversation
+                                conversationLoadError = true;
+                                disableChatButtons(true);
+                                unlockMainTab();                      
+                                enableLinkButton();
+                                updatePopover();LiveTextChat.LT.persistObjectLinkingOnRefresh();
+                            }else if(result['records']['{!nameSpace}Formatted_Transcript_1__c'] == null){
+                                //This part is executed only when user refreshes conversation page, and conversation is not reopened
+                                enableLinkButton();
+                                reloadChat();
+                                updatePopover();LiveTextChat.LT.persistObjectLinkingOnRefresh();
+                                Visualforce.remoting.Manager.invokeAction(
+                                '{!$RemoteAction.LiveTextChatController.insertSMSTextRecordStatic}',
+                                    currentConversationRecordId,
+                                    function(result, event){
+                                        if(result != null){
+
+                                        }
+                                    }
+                                );
+                            }else{
+                                reloadChat();
+                            }
+                        });
+                    }
+                    else{
+                        unlockMainTab();
+                        hideLoadingProgress();
+                    }
+                    initConversation(
+                        currentConversationRecordId,
+                        originalPhoneNumber,
+                        getSafeParameterByName('conversationtype', pageUrl),
+                        getSafeParameterByName('phonetype', pageUrl),
+                        objectId,
+                        objectPrefix
+                    );
+                }
+            );
+        });
+    }
+
+    function reloadChat() {
+        setTimeout(function(){
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.LiveTextChatController.getInitialMessage}',
+                currentConversationRecordId,
+                function(result, event) {
+                    if(result != null) {
+                        hideLoadingProgress();
+                        j$("#chatbox").html('');
+                        LiveTextChat.LT.displayMessageList(result, false);
+                        j$("#chatbox").linkify();
+                        scrollChatBox(false);
+                    } else {
+                        console.log('There Is not Internet');
+                        reloadChat();
+                    }
+                }
+            )
+        },1500)
+    }
+
+    function redirectPrimaryTab(phoneNumber){
+        sforce.console.getFocusedPrimaryTabId(function(result) {
+            var tabId = result.id;
+            sforce.console.getPageInfo(tabId, function(result){
+                var resultObj =  JSON.parse(result.pageInfo);
+                var pageUrl = resultObj.url;
+                var firstPart = pageUrl.substring(0,pageUrl.indexOf('?')+1);
+                var paramNames = getUrlParameterNames(pageUrl);
+                var newUrl = firstPart;
+                for(var i=0;i<paramNames.length;i++){
+                    var paramName = paramNames[i];
+                    if(i > 0)
+                        newUrl += '&';
+                    newUrl += paramName;
+                    newUrl += '=';
+                    if(paramName === 'phone'){
+                        newUrl += phoneNumber;
+                    }else if(paramName === 'cvid'){
+                        newUrl += currentConversationRecordId;
+                    }else{
+                        newUrl += getSafeParameterByName(paramName, pageUrl);
+                    }
+                }
+                sforce.console.openPrimaryTab(tabId, newUrl, true);
+            });
+        });
+    }
+
+    var subtabIds;
+    var sbtabID=0;
+
+    function addConversationHeaderIdToSessionStorage(conversationRecordId){
+        var autoLinkingPerformed = isNullOrEmpty(sessionStorage.getItem('autoLinkingPerformed'))
+                                    ? []
+                                    : JSON.parse(sessionStorage.getItem('autoLinkingPerformed'));
+        autoLinkingPerformed.push(conversationRecordId);
+        sessionStorage.setItem('autoLinkingPerformed', JSON.stringify(autoLinkingPerformed));
+    }
+
+    j$(document).ready(function() {
+
+        forcetk.Client.prototype.blob = function (path, fields, filename, payloadField, payload, callback, error, retry) {
+            'use strict';
+            var that = this,
+            url = (this.visualforce ? '' : this.instanceUrl) + '/services/data' + path,
+            boundary = randomString(),
+            blob = new window.Blob([
+                "--boundary_" + boundary + '\n'
+                    + "Content-Disposition: form-data; name=\"entity_content\";" + "\n"
+                    + "Content-Type: application/json" + "\n\n"
+                    + JSON.stringify(fields)
+                    + "\n\n"
+                    + "--boundary_" + boundary + "\n"
+                    + "Content-Type: application/octet-stream" + "\n"
+                    + "Content-Disposition: form-data; name=\"" + payloadField
+                    + "\"; filename=\"" + filename + "\"\n\n",
+                payload,
+                "\n\n"
+                    + "--boundary_" + boundary + "--"
+            ], {type : 'multipart/form-data; boundary=\"boundary_' + boundary + '\"'});
+
+            var data = new FormData();
+            data.append('file', blob);
+
+            var headers = {};
+            headers['Accept'] = 'application/json';
+            headers[this.authzHeader] = "Bearer " + this.sessionId;
+            headers['X-User-Agent'] = 'salesforce-toolkit-rest-javascript/' + this.apiVersion;
+            headers['Content-Type'] =  'multipart/form-data; boundary=\"boundary_' + boundary + '\"';
+            if (this.proxyUrl !== null && !this.visualforce) {
+                headers['SalesforceProxy-Endpoint'] = url;
+            }
+
+            j$.ajax({
+                url :  (this.visualforce ? '' : this.instanceUrl) + '/services/data' + path,
+                headers : headers,
+                type: 'POST',
+                data: data,
+                contentType: "multipart/form-data; boundary=boundary_"+boundary,
+                processData: false,
+                success: function(data, textStatus, xhr) {
+                    callback(data);
+                },
+                error: function() {
+                    error(null);
+                }
+            });
+
+            return null;
+        };
+
+        function handleFileSelect(evt)
+        {
+            hideAttachOptions();
+            files = j$.extend( files, evt.target.files );
+            sendMMS(true);
+            j$('#removeAttachedImage').show();
+        }
+
+
+
+        document.getElementById('files').addEventListener('change', handleFileSelect, false);
+
+        showLoadingProgress();
+        disableEndSessionButton();
+        sforce.console.addEventListener('AutoLinkingComplete', function(result){
+            var message = j$.parseJSON(result.message);
+            sforce.console.getEnclosingPrimaryTabId(function(priresult){
+                if(priresult.id == message.currentPrimaryTabID){ //This check is imp otherwise all other sessions will intercept this event
+                    enableLinkButton();
+                    getCurrentConversationHeaderList();
+                    newCaseAfterAutolinking = false;
+                    addConversationHeaderIdToSessionStorage(currentConversationRecordId);
+                }
+            });
+        });
+        sforce.console.addEventListener('associatedObjectsLoaded', function(result){
+            var autoLinkingPerformed = isNullOrEmpty(sessionStorage.getItem('autoLinkingPerformed'))
+                                       ? []
+                                       : JSON.parse(sessionStorage.getItem('autoLinkingPerformed'));
+            var message = j$.parseJSON(result.message);
+            var containConversationHeaderId = (autoLinkingPerformed.indexOf(currentConversationRecordId) > -1);
+            sforce.console.getEnclosingPrimaryTabId(function(priresult){
+                if(priresult.id == message.currentPrimaryTabID && containConversationHeaderId){ //This check is imp otherwise all other sessions will intercept this event
+                    enableLinkButton();
+                    getCurrentConversationHeaderList();
+                }
+            });
+        });
+
+        /**
+        * This function starts polling the tabdId argument to see if any new Object is created for every 1 sec.
+        * @param tabId subTabId of the current focused subtab
+        * @return No return value.
+        */
+        startPollingSubTab = function(subTabId){
+            var checkNewTabObjId = function(){
+                sforce.console.getFocusedSubtabId(function(focusedResult){
+                    if(focusedResult.id == subTabId){
+                        sforce.console.getPageInfo(subTabId, function(pageInfoResult){
+                            var result =  JSON.parse(pageInfoResult.pageInfo);
+                            if(result.objectId == null){
+                                setTimeout(checkNewTabObjId,LiveTextChat.LT.polling_time_interval);
+                            }else{
+                                //console.log('AUTO LINKING sub tab id: ' + subTabId);
+                                //console.log('AUTO LINKING FOC RESULT: ' + JSON.stringify(focusedResult));
+                                //console.log('AUTO LINKING RESULT: ' + JSON.stringify(result));
+                                handleLinkRecordsClicked(result.objectId.substring(0, 3), result.objectId, true);
+                            }
+                        });
+                    }
+                });
+            };
+            setTimeout(checkNewTabObjId,LiveTextChat.LT.polling_time_interval);
+        };
+
+        initializeFromPrimaryTab();
+
+        sforce.console.addEventListener('PrimaryTabFocusChange',function(result){
+            var messageObj = JSON.parse(result.message);
+                var tempTabId = messageObj['currentPrimaryTabID'];
+                sforce.console.getEnclosingPrimaryTabId(function(result){
+                    if(tempTabId == result.id){ //This check is required otherwise all the primary tabs opened will fire this event.
+                        getFocusedSubtabFuncn();
+                    }
+                });
+            });
+
+        sforce.console.onFocusedSubtab(function(result){
+            focusedSubTabId = result.id;
+            refreshTabIds(function(){
+                checkPageInfoFuncn(focusedSubTabId);
+            });
+        });
+
+        getFocusedSubtabFuncn();
+        //blocked until details tab loads
+        disableLinkButton();
+        formatDisplayedPhoneField();
+
+    }); //end on document ready
+
+    function isOutBoundConversation(){
+        return  j$('[id$="hiddenconvtype"]').text() === 'Outbound';
+    }
+
+    function getObjectName(){
+        return  j$('[id$="hiddenobjectname"]').text();
+    }
+
+    function getConversationRecordId(){
+        return  j$('[id$="hiddenconversationRecordId"]').text();
+    }
+
+    function isConversationInQueue(){
+        return j$('[id$="hiddenisconversationinqueue"]').text() == 'true';
+    }
+
+    function getInitialMessageList(){
+        return  j$('[id$="hiddeninitialmessage"]').text();
+    }
+
+    function getConvHeaderStatus(){
+        return  j$('[id$="convHeaderStatus"]').val();
+    }
+
+    function getOriginatingNumber(){
+        return  j$('[id$="originatingNumber"]').text();
+    }
+
+    function getFormattedActiveSupportNumber(){
+        var records = getMyPhoneNumbers();
+        return records[getActiveSupportNumberId()][0].replace('+1','');
+    }
+
+    function getActiveSupportNumber(){
+        var records = getMyPhoneNumbers();
+        console.log('Active Support Number Id: ' + getActiveSupportNumberId());
+        console.log('Records: ' + JSON.stringify(records));
+        console.log('Records[getActiveSupportNumberId]: ' + records[getActiveSupportNumberId()][0]);
+        return records[getActiveSupportNumberId()][0].replace(/[^0-9\+]/g,'');
+    }
+
+    function getActiveSupportNumberTimeout(){
+        var records = getMyPhoneNumbers();
+        return records[getActiveSupportNumberId()][1] === 'null' ? 'null' : records[getActiveSupportNumberId()][1]*1000;
+    }
+
+    function getActiveSupportNumberId(){
+        return j$('[id$="activeSupportNumber"]').val();
+    }
+
+    function getActiveSupportNumberLabel(){
+        return j$('[id$="activeSupportNumber"] option:selected').text();
+    }
+
+    function getConversationHeaderList(){
+        return j$('[id$="hiddenoptxtLTChat"]').text();
+    }
+
+    function setConversationHeaderList(list){
+        j$('[id$="hiddenoptxtLTChat"]').text(list);
+    }
+
+    function callConversationDetailLink (objectPrefix, objectId, isRecordLinked){
+        sforce.console.getFocusedPrimaryTabId(function(result){
+            var linkedObject = {};
+            linkedObject['objectId'] = objectId;
+            linkedObject['objectPrefix'] = objectPrefix;
+            linkedObject['linked'] = isRecordLinked;
+            linkedObject['currentPrimaryTabID'] = result.id;
+            linkedObject['currentConversationRecordId'] = currentConversationRecordId;
+            reloadCaseTab(linkedObject);
+            sforce.console.fireEvent('recordLinkedFromChat', JSON.stringify(linkedObject), function(){} );
+        });
+    }
+
+    function initPopover(){
+        j$('[alt=popover]').popover({
+            animation: true,
+            html: true,
+            placement: 'bottom',
+            content: function() {
+                if(j$('#popover_content').hasClass('loaded')){
+                    return j$('#popover_content').html();
+                }else{
+                    if(flag == true){ // flag ensures we run through below loop just once.
+                        LiveTextChat.LT.persistObjectLinkingOnRefresh();
+                        <apex:repeat value="{!customObjectsForManualLinking}" var="element">
+                            is{!element.recordType}CheckBoxVisible = 2;
+                        </apex:repeat>
+                        flag = false;
+                    }
+                    <apex:repeat value="{!customObjectsForManualLinking}" var="element">
+                        if (is{!element.recordType}CheckBoxVisible == 1) {
+                            j$('#{!element.recordType}LookupText').text({!element.recordType}Name);
+                            j$('#{!element.recordType}CheckBox').attr('checked', 'checked');
+                            j$('#{!element.recordType}CheckBox').show();
+                        }else if(is{!element.recordType}CheckBoxVisible == 0){
+                            j$('#{!element.recordType}CheckBox').attr('checked', false);
+                        }
+                    </apex:repeat>
+                    j$('#popover_content').addClass('loaded');
+                    return j$('#popover_content').html();
+                }
+            }
+        });
+        <apex:repeat value="{!customObjectsForManualLinking}" var="element">
+            j$('#header').delegate('#{!element.recordType}Search', 'click', function(n) {
+                customLookup = window.open('{!element.lookUpUrl}', '{!element.recordLabel} Search', 'width=670,height=480,top=0,toolbar=no,personalbar=no,location=no,irectories=no,statusbar=no,menubar=no,status=no,resizable=yes,left=60,screenX=60,top=100,screenY=100');
+                if (window.focus){
+                    customLookup.focus()
+                }
+            });
+        </apex:repeat>
+    };
+    
+    function isShortCode(phoneNumber){
+    	phoneNumber = phoneNumber.replace(/\D/g,'');
+    	return phoneNumber.length == 5 || phoneNumber.length == 6;
+    }
+
+    //sends message when send button is clicked
+    function validatePhoneNumbers(supportPhoneNumberId, phoneNumber, callback){   
+            Visualforce.remoting.Manager.invokeAction(
+                    '{!$RemoteAction.LiveTextChatController.validatePhoneNumbers}',
+                    supportPhoneNumberId,
+                    phoneNumber,
+                    callback);
+    }
+     //checks optoutstatus before send
+    function optCheck(callback) {
+        var supportPhoneNumberId = getActiveSupportNumberId();
+        var phoneNumber = getOriginatingNumber().replace(/\D/g,'');
+        var supportNumberName = getActiveSupportNumberLabel();
+        var objectName = (getObjectName() != '' && phoneNumber.indexOf(originalPhoneNumber) !=-1) ? getObjectName() : getOriginatingNumber();
+        console.log('Checking optin status supportPhoneNumberId: ' + supportPhoneNumberId + ', phoneNumber: ' +   phoneNumber + ', objectName: ' + objectName);
+        Visualforce.remoting.Manager.invokeAction(
+            '{!$RemoteAction.LiveTextChatController.getOptinStatusMessage}',
+            supportPhoneNumberId,
+            phoneNumber,
+            supportNumberName,
+            objectName,
+            callback);
+    }
+
+    function enableButton(button){
+        button.prop('disabled', false);
+    }
+
+    function disableButton(button){
+        button.prop('disabled', true);
+    }
+
+    function enableSendButton(){
+        enableButton(j$('[id$="send"]'));
+    }
+
+    function disableLinkButton(){
+        j$('[id$="popover"]').removeClass('clipImg');
+        j$('[id$="popover"]').removeClass('clipImg_hover');
+        j$('[id$="popover"]').addClass('clipImg_disabled');
+        //j$('[id$="popover"]').popover('disable');
+    }
+
+    function enableLinkButton(){
+        j$('[id$="popover"]').removeClass('clipImg_disabled');
+        j$('[id$="popover"]').addClass('clipImg');
+        j$('[id$="popover"]').addClass('clipImg_hover');
+        //initPopover();
+        //j$('[id$="popover"]').popover('enable');
+    }
+
+
+    function disableSendButton(){
+        disableButton(j$('[id$="send"]'));
+    }
+
+    function disableAttachButton(){
+        j$("#camera").unbind("click");
+        j$("#camera").css( "cursor", "default" );
+    }
+
+    function enableConversationHeaderButtons(){
+        enableButton(j$('[id$="activeSupportNumber"]'));
+        enableButton(j$('[id$="originatingNumber"]'));
+    }
+
+    function disableConversationHeaderButtons(){
+        disableButton(j$('[id$="activeSupportNumber"]'));
+        disableButton(j$('[id$="originatingFormattedNumber"]'));
+    }
+
+    function enableEndSessionButton(){
+        enableButton(j$('[id$="endChatBtn"]'));
+        lockMainTab();
+    }
+
+    function disableEndSessionButton(){
+        disableButton(j$('[id$="endChatBtn"]'));
+        conversationShouldTurnRedMap[currentTabId] = false;
+        conversationAlertOn = false;
+        sforce.console.setTabStyle(null, currentTabId);
+        sforce.console.setTabTextStyle(null, currentTabId);
+        conversationShouldTurnRedMap[currentSubTabId] = false;
+        sforce.console.setTabStyle(null, currentSubTabId, null);
+        sforce.console.setTabTextStyle(null, currentSubTabId, null);
+    }
+
+    function getMyPhoneNumbers(){
+        var phoneNumbersObj = j$('[id$=hiddenphonenumbers]').text();
+        if (phoneNumbersObj) {
+            return j$.parseJSON(phoneNumbersObj);
+        }
+        return null;
+    }
+
+    function updatePopover() {
+        console.log('updating popover');
+        initPopover();
+        var conversationObj = getConversationHeaderList();
+        if(conversationObj){
+            var conversationRecords = JSON.parse(conversationObj);
+            if(conversationRecords || conversationRecords.length != 0){
+                for(var i = 0; i < conversationRecords.length; i++){
+                    var tempAccountId = null;
+                    var tempContactId = null;
+                    <apex:outputPanel id="customObjectLinkingPanel" layout="none">
+                        <apex:repeat value="{!customObjectsForManualLinking}" var="element" >
+                            if(conversationRecords[i][fldRef{!element.recordType}] != null){
+                                {!element.recordType}Name = conversationRecords[i][fldRef{!element.recordType}]['{!element.recordNameField}'];
+                                {!element.recordType}Id = conversationRecords[i][fldRef{!element.recordType}][fldId];
+                                if('{!element.recordPrefix}' == '003')
+                                    tempContactId = conversationRecords[i][fldRef{!element.recordType}][fldId];
+                                if('{!element.recordPrefix}' == '001')
+                                    tempAccountId = conversationRecords[i][fldRef{!element.recordType}][fldId];
+                                j$('#{!element.recordType}LookupText').text({!element.recordType}Name);
+                                j$('#{!element.recordType}CheckBox').prop('checked',true);
+                                j$('#{!element.recordType}CheckBox').attr('checked', 'checked');
+                                j$('#{!element.recordType}CheckBox').show();
+                                is{!element.recordType}CheckBoxVisible = 1;
+                            }else{
+                                {!element.recordType}Name = null;
+                                {!element.recordType}Id = null;
+                                if('{!element.recordPrefix}' == '003' || '{!element.recordPrefix}' == '001'){
+                                    if('{!element.recordPrefix}' == '003')
+                                        tempContactId = null;
+                                    if('{!element.recordPrefix}' == '001')
+                                        tempAccountId = null;
+                                }
+                                j$('#{!element.recordType}CheckBox').prop('checked', false);
+                                j$('#{!element.recordType}CheckBox').hide();
+                                j$('#{!element.recordType}LookupText').text('No open {!element.recordLabelPlural}');
+                                is{!element.recordType}CheckBoxVisible = 0;
+                            }
+                        </apex:repeat>
+                    </apex:outputPanel>
+                    refreshTabIds(function(){
+                        if(previousContactId != ContactId || previousAccountId != AccountId){
+                            if(previousAccountId != AccountId){
+                                reloadNewOpportunitySubTabAccountData(); // reload new opportunity if account changed
+                            }
+                            reloadNewCaseSubTab(); // reload new case if contact or account changed
+                        }
+                        previousAccountId = tempAccountId;
+                        previousContactId = tempContactId;
+                    });
+                }
+            }else{
+                console.log('ConversationRecords is null');
+                getCurrentConversationHeaderList();
+            }
+        }else{
+            console.log('conversationObj is null');
+        }
+    }
+
+    function displayInboundMessage(user, msg, autoScroll, suppressAudio) {
+        msg = j$.trim(msg);
+        var isImage = isImageURL(msg);
+        if(j$('[id$="hiddenconvtype"]').text() != 'Inbound'){
+            user = phoneFormatter(user, locale);
+        }else{
+            user = phoneInternationalFormatter(user);
+        }
+        if(isImage){
+            msg ='<div><img style=\'max-width:250px; max-height:200px;cursor:pointer;\' onclick= openImgInTab(\''+msg+'\');  src=\'' + msg + '\'></div>';
+        }
+        if (j$("#chatbox").html() != 0) {
+            j$("#chatbox").append('<br/>');
+        }
+        if(isOutBoundConversation() && getObjectName().length > 0){
+            user = getObjectName();
+            if(user.length > 25){
+                user = user.substring(0,25) + '...';
+            }
+        }
+        //htmlEntities => Convert special character into HTML readable string
+        j$("#chatbox").append("<label class='bot'>" + user + ":</label> " + msg);
+        if(autoScroll == null || autoScroll == true){
+            var animatedScroll = isImage;
+            scrollChatBox(animatedScroll);
+        }
+        LiveTextChat.LT.playSendReceiveAudio(suppressAudio);
+    }
+
+    function setSupportNumberTooltip(){
+        var title = j$('[id$=activeSupportNumber]').text();
+        title += ' - ' + getFormattedActiveSupportNumber();
+        j$('[id$=activeSupportNumber]').attr('title', title);
+    }
+
+    function isValidURL(str) {
+        var regexp = /(ftp|http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?/
+        return regexp.test(str);
+    }
+
+    function isValidHTTPSURL(str) {
+        var regexp = /(https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?/
+        return regexp.test(str);
+    }
+
+    function isImageURL(str) {
+        if(!isValidURL(str)) return false;
+        if (/(jpg|gif|png|JPG|GIF|PNG|JPEG|jpeg)$/.test(str)){
+            return true;
+        }
+        return false;
+    }
+
+    function openImgInTab(msg){
+        var urlToUse='/apex/{!nameSpace}LiveTextPic?imageurl='+escape(msg);
+        sforce.console.openSubtab(currentTabId, urlToUse, true, 'Image' ,null, function(result){
+            //Report whether we succeeded in opening the subtab
+            if(result.success == true){
+             //the image was opened as a subtab
+            }else{
+                alert('A subtab is already open for this image.'); //@TODO: change focus on opened subtab
+            }
+        });
+    }
+
+    function openOutboundImgInSubTab(msg, name){
+        var urlToUse='/apex/{!nameSpace}LiveTextPic?imageurl=' + name;
+        sforce.console.openSubtab(currentTabId, urlToUse, true, 'Image' ,null, function(result){
+             //Report whether we succeeded in opening the subtab
+            if(result.success == true){
+                setTimeout(function(){
+                    var message = {};
+                    message['url'] = msg;
+                    message['subTabid'] = result.id;
+                    sforce.console.getFocusedPrimaryTabId(function(result){
+                        message['fireEventPrimaryTabId'] = result.id;
+                        sforce.console.fireEvent( 'setImage', JSON.stringify(message), function(){} );
+                    });
+                 },
+                1000);
+             //the image was opened as a subtab
+            }else{
+                alert('A subtab is already open for this image.');//@TODO: change focus on opened subtab
+            }
+        });
+    }
+
+    function getImageHyperlink(imageUrl){
+        var markup = '<a href=\'' + imageUrl + '\' target=\'_blank\'><div style=\'width:250px; height:200px; background: url(' + imageUrl + ') no-repeat center;background-size:contain;\'></div></a>';
+        return markup;
+    }
+
+    function scrollChatBox(animated){
+        if(animated){
+            var cbox = j$('#chatbox');
+            var height = cbox.scrollTop() + cbox.height() + j$('#chatbox').filter('.username:last').scrollTop();
+            var heightbot = j$("#chatbox").prop("scrollHeight");
+            cbox.animate({'scrollTop' : height}, 400);
+            cbox.animate({'scrollTop' : heightbot}, 400);
+        }else{
+            j$("#chatbox").scrollTop(j$("#chatbox").prop("scrollHeight"));
+        }
+    }
+
+    function onReloadConversationFromServerComplete(){
+        j$("#chatbox").html('');
+        LiveTextChat.LT.getUsername(true);
+    }
+
+    function sendMMS(isFirst){
+        var positionIndex = 0;
+        for (var i = 0, f = files[i]; i < files.length; i++) {
+            if(f === undefined){
+              continue;
+            }
+            if (!f.type.match('image/(jpg|gif|png|JPG|GIF|PNG|JPEG|jpeg)')){
+              alert('{!$Label.UnsupportedFileFormatMMS}');
+              continue;
+            }else{
+              var reader = new FileReader();
+              reader.onload = (function(theFile){
+                  var fileSize = f.size;
+                  return function(e){
+                    if(theFile.size <= maxFileSize){
+                      totalLength = this.result.length;
+                      if(totalLength < maxStringSize){
+                        j$('#camera').attr('src', e.target.result);
+                        enableSendButton();
+                        sentMMSText = '<br/> >>> MMS Message Sent:  ';
+                        sentMMSText += theFile.name;
+                        sentMMSText += ' <<< <br/>';
+
+                        if(!isFirst){
+                          chatMsgCounter++;
+                          var originatingNumber = getOriginatingNumber();
+                          var supportNumber = getActiveSupportNumber();
+                          var encodedFile = e.target.result.split(',')[1];
+
+                          function upload(conversationId, firstNumber, secondNumber, image, imageTitle, part, mimeType){
+                            client.createBlob('Attachment', {
+                                    'ParentId': conversationId,
+                                    'Name': theFile.name,
+                                    'ContentType': theFile.type
+                                    },
+                                theFile.name,
+                                'Body',
+                                theFile,
+                                function(response){
+                                    console.log(response);
+                                    Visualforce.remoting.Manager.invokeAction(
+                                    '{!$RemoteAction.LiveTextChatController.sendMMSAsAttachment}',
+                                      conversationId,
+                                      firstNumber,
+                                      secondNumber,
+                                      response.id,
+                                      imageTitle,
+                                      getActiveSupportNumberId(),
+                                      theFile.type,
+                                      function(result, event){
+                                          if(result == 204){
+                                            Visualforce.remoting.Manager.invokeAction(
+                                            '{!$RemoteAction.LiveTextChatController.removeAttachment}',
+                                            conversationId,
+                                            imageTitle,
+                                            function(result, event){
+                                                console.log('POINT DRAFT');
+                                                console.log(currentTabId);
+                                                console.log('POINT DRAFT');
+                                                conversationAlertOn = false;
+                                                conversationShouldTurnRedMap[currentTabId] = false;
+                                                sforce.console.setTabStyle(null, currentTabId, null);
+                                                sforce.console.setTabTextStyle(null, currentTabId);
+                                                conversationShouldTurnRedMap[currentSubTabId] = false;
+                                                sforce.console.setTabStyle(null, currentSubTabId, null);
+                                                sforce.console.setTabTextStyle(null, currentSubTabId, null);
+                                                document.getElementById('files').value = '';
+                                            },
+                                                {buffer: false, escape: true, timeout: 120000}
+                                            );
+                                        }else if(event.type === 'exception'){
+                                            console.log('exception');
+                                            LiveTextChat.LT.displayInsertRecordError('Message Not Delivered.', chatMsgCounter);
+                                        }else{
+                                            console.log('exception2');
+                                            console.log(event);
+                                            LiveTextChat.LT.displayInsertRecordError('Message Not Delivered.', chatMsgCounter);
+                                        }
+                                      },
+                                      {buffer: false, escape: true, timeout: 120000}
+                                    );
+                                },
+                                function(request, status, response){
+                                    console.log('ERROR: ' + status);
+                                    LiveTextChat.LT.displayInsertRecordError('Message Not Delivered.', chatMsgCounter);
+                                });
+                          }
+
+                            if(currentConversationRecordId == ''){
+                                    insertConversationHeader(sentMMSText, sentMMSText, chatMsgCounter, objectId, false, true, function(){
+                                        if(currentConversationRecordId != ''){
+                                            upload(currentConversationRecordId, originatingNumber, supportNumber, encodedFile, theFile.name, 'First',theFile.type);
+                                        }
+                                    });
+                          }else{
+                            upload(currentConversationRecordId, originatingNumber, supportNumber, encodedFile, theFile.name, 'First',theFile.type);
+                          }
+                          var agentname = '{!JSENCODE(userName)}';
+                          var span = document.createElement('span');
+                          span.innerHTML = ['<br/><img class="chatImg" style="cursor: pointer;" src="',e.target.result,'" onclick=openOutboundImgInSubTab("',e.target.result,'","',new Date().getTime().toString(),'"); title="image"/>'].join('');
+
+                          j$("#chatbox").append('<br/>');
+                          var appendString = '<div style="display: inline;" class="senttxtMsg-' + chatMsgCounter + '"><label class="username">' + j$.trim(agentname) + ':</label> ';
+                          appendString += navigator.onLine === false ? '<span style="color: red;">(!)</span> '+span.innerHTML +'</div>' : span.innerHTML +'</div>';
+
+                          j$("#chatbox").append(appendString);
+                          j$("#chatbox").linkify();
+                          scrollChatBox(false);
+                          LiveTextChat.LT.playSendReceiveAudio(false);
+                          j$('#camera').attr('src', cameraImg);
+                          j$('#removeAttachedImage').hide();
+                          LiveTextChat.LT.resetCount();
+                        }
+                      }else{
+                        alert("Base 64 Encoded file is too large.  Maximum size is " + maxStringSize + " your file is " + totalLength + ".");
+                      }
+                    }else{
+                      alert("Images up to 2MB in size may be sent. Please select a smaller image.");
+                    }
+                  }
+              })(f);
+              if(!isFirst){
+                files[i] = undefined;
+              }
+              reader.readAsDataURL(f);
+              break;
+            }
+        }
+    }
+
+    function onInitializationComplete(){
+        
+        document.cookie = 'documentpreviouslyloaded=1';
+        
+        j$('[alt=popover]').trigger('click');
+        j$('[alt=popover]').trigger('click');
+        currentConversationRecordId = getConversationRecordId();
+        if(currentConversationRecordId != null && currentConversationRecordId != '' && isOutBoundConversation()){
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.LiveTextChatController.getInitialMessage}',
+                currentConversationRecordId,
+                function(result, event){
+                  if(result != null){
+                    LiveTextChat.LT.displayMessageList(result, false);
+                    enableEndSessionButton();
+                    enableLinkButton();
+                  }
+            });
+        }
+
+        sforce.console.addEventListener('NewSMSText', function(result){
+            console.log(result);
+            var message = j$.parseJSON(result.message);
+            console.log('Live Text Page subscribe message: ' + '[' + new Date() + '] payload: [' + JSON.stringify(message) + ']');
+            if(message.data.sobject[fldConvHeader] == currentConversationRecordId && convHeaderStatus != 'Ended'){
+                sforce.connection.sessionId = '{!$Api.Session_ID}';
+                var soqlQuery = 'Select id,{!nameSpace}AcceptedBy__c FROM {!nameSpace}Conversation_Header__c WHERE Id =\''+currentConversationRecordId+'\' Limit 1';
+                sforce.connection.query(soqlQuery, function(res){
+                    if(res['records']['{!nameSpace}AcceptedBy__c'] == '{!$User.Id}'){
+                        // have to do remoting to retrive message__c, since in push topic we cannot retrive Long Text Area field
+                        Visualforce.remoting.Manager.invokeAction(
+                            '{!$RemoteAction.LiveTextChatController.getSMSTextRecord}',
+                            message.data.sobject.Id,
+                            function(result, event){
+                                if(event.status){
+                                    //do whatever rendering of the list you want
+                                    displayInboundMessage(result[fldOriginatingNumber], result[fldMessage], true, false);
+                                    j$("#chatbox").linkify();
+                                }
+                            }, {
+                                escape: true
+                            }
+                        );
+                        //sforce.console.getPageInfo(***tabId:String***, (optional)callback:Function)
+                        sforce.console.setTabStyle('background:#fffbaf;', currentTabId);
+                        sforce.console.setTabStyle('background:#fffbaf;', null);
+                        sforce.console.setTabStyle('background:#fffbaf;', currentSubTabId, null);
+                        sforce.console.setTabTextStyle(null, currentTabId);
+                        sforce.console.setTabTextStyle(null, currentSubTabId);
+                        conversationAlertOn = false;
+                        conversationShouldTurnRedMap[currentTabId] = true;
+                        conversationShouldTurnRedMap[currentSubTabId] = true;
+                        if(getActiveSupportNumberTimeout() !== 'null'){
+                              turnRedAfterTimout(getActiveSupportNumberTimeout(), currentTabId, currentSubTabId)
+                        }
+                    }
+                });
+            }
+        });
+
+        sforce.console.addEventListener('NewConversationHeader', function(result){
+            var message = j$.parseJSON(result.message);
+            var end = JSON.stringify(message.data.sobject[fldStatus]);
+            var ended = JSON.parse(end);
+            var temp = JSON.parse('"{!$Label.EndStatus}"');
+            var convHeaderIdFromPushTopic = JSON.stringify(message.data.sobject[fldId]);
+            var convHdIdFromPushTopic = JSON.parse(convHeaderIdFromPushTopic);
+
+            if((ended === temp) && (currentConversationRecordId === convHdIdFromPushTopic)){
+                sforce.console.setTabUnsavedChanges(false, null, currentSubTabId);
+                disableEndSessionButton();
+                disableSendButton();
+                j$("#textarea").attr('disabled', 'disabled');
+                j$("#textarea").attr('placeholder', '{!$Label.EndedChatSendMsgPlaceholderLbl}');
+                j$('[id$="send"]').addClass("sendButtonDisabled");
+            }
+        });
+
+        function reloadConversationFromServer(){
+            try{
+                console.log('Chat Page Testing for Sfdc.provide in reloadConversationFromServer');
+                Sfdc.provide("SfdcApp.Visualforce.VSManager",{});
+            }catch(e){
+                console.log('reloadConversationFromServer Error:' +e);
+                if(e.message.indexOf('Sfdc.provide is not a function') >= 0){
+                    sessionTimeoutOccured = true;
+                    showConnectivityError();
+                    return;
+                }
+            }
+            _reloadConversationFromServer();
+        }
+
+
+        sforce.console.addEventListener('ConnectivityChanged', function(result){
+            var connected = (result.message == '1');
+            if(connected){
+                showLoadingProgress();
+                if(currentConversationRecordId != null && currentConversationRecordId != ''){
+                   reloadChat();
+                }else{
+                    j$("#chatbox").html('');
+                    disableEndSessionButton();
+                    hideLoadingProgress();
+                }
+            }
+        });
+
+        //event listenter which gets fired whenever textarea gets changed from quicktext.page
+        sforce.console.addEventListener('textAreaChanged', function(result){
+            var message = j$.parseJSON(result.message);
+            sforce.console.getEnclosingPrimaryTabId(function(result1){
+              if(message.currentPrimaryTabID == result1.id){
+                var cursorPosStart = j$('#textarea').prop('selectionStart');
+                var cursorPosEnd = j$('#textarea').prop('selectionEnd');
+                var v = j$('#textarea').val();
+                var textBefore = v.substring(0,  cursorPosStart );
+                var textAfter  = v.substring( cursorPosEnd, v.length );
+                j$('#textarea').val( textBefore+ message.selectedMessage +textAfter );
+                j$('#textarea').trigger("keyup");
+              }
+            });
+        });
+
+        sforce.console.addEventListener('recordLinkedFromDetailJS', function(result){
+            var message = j$.parseJSON(result.message);
+            var tempTabId = message['currentPrimaryTabID'];
+            sforce.console.getEnclosingPrimaryTabId(function(result){
+                if(tempTabId == result.id){ //This check is required otherwise all the primary tabs opened will fire this event.
+                    reloadCaseTab(message);
+                    if(message.linked){
+                        if(j$('#chatPanel').find('tr#'+message.objecttype).next().prop('class') == 'objValue'){
+                            var element = j$('#chatPanel').find('tr#'+message.objecttype).next().find('#'+message.objecttype+'CheckBox');
+                            element.prop('checked', true).show();
+                            element.attr('objectId', message.objectid).attr('objectType', message.objecttype).attr('objectPrefix', message.objectprefix).attr('objectLinkName', message.objectlinkname).attr('linked', false).attr('objectplurallabel', message.objectplurallabel).attr('checked', 'checked').attr('onclick', 'fireLinkingEvent(this)');
+                            j$('#chatPanel').find('tr#'+message.objecttype).next().find('#'+message.objecttype+'LookupText').text(message.objectlinkname);
+                        }
+                    }else{
+                        var objectLabel = j$('#chatPanel').find('tr#'+message.objecttype).find('label').first().text();
+                        j$('#chatPanel').find('tr#'+message.objecttype).next().find('#'+message.objecttype+'CheckBox').prop('checked', false).hide();
+                        j$('#chatPanel').find('tr#'+message.objecttype).next().find('#'+message.objecttype+'LookupText').text('No open '+message.objectplurallabel);
+                    }
+                }
+            });
+        });
+
+        afterEnter = false;
+        convHeaderStatus = getConvHeaderStatus();
+        if(convHeaderStatus != 'Active'){
+            var isNewOutboundConversation = isOutBoundConversation() && (j$("#chatbox").html() == 0);
+            if(isNewOutboundConversation){
+                disableLinkButton();
+            }
+            if(!isNewOutboundConversation){
+                disableEndSessionButton();
+                disableSendButton();
+                disableAttachButton();
+                j$("#textarea").attr('disabled', 'disabled');
+                if(convHeaderStatus == 'Ended'){
+                    j$("#textarea").attr('placeholder', '{!$Label.EndedChatSendMsgPlaceholderLbl}');
+                }
+                j$('[id$="send"]').addClass("sendButtonDisabled");
+                LiveTextChat.LT.resetCount();
+            }
+        }
+
+        j$('[id$=originatingFormattedNumber]').focus(function(){
+            displayOriginatingNumberError('');
+        });
+
+        j$('[id$=originatingFormattedNumber]').change(function(){
+            formatDisplayedPhoneField(j$('[id$=originatingFormattedNumber]').val());
+        });
+
+        j$('[id$=activeSupportNumber]').change(function () {
+            displayOriginatingNumberError('');
+            setSupportNumberTooltip();
+            formatDisplayedPhoneField();
+        });
+
+        var conversationObj = getConversationHeaderList();
+        if(conversationObj){
+          conversationRecords = j$.parseJSON(conversationObj);
+        }
+        var setOriginatingIcon= function(result) {
+            if(result.success == true){
+                var objPrefix=objectId.substring(0,3);
+                if(false){
+                    //for performence
+                }
+                <apex:repeat value="{!customObjectsForManualLinking}" var="element">
+                    else if(objPrefix=="{!element.recordPrefix}"){
+                        sforce.console.setTabIcon('{!element.miniIconUrl}',result.id);
+                    }
+                </apex:repeat>
+            }
+        };
+
+        //Add a listener to handle the closing of the enclosing primary tab
+        sforce.console.getEnclosingPrimaryTabId(function(result) {
+            currentTabId = result.id;
+            if(isOutBoundConversation()){
+                sforce.console.setTabTitle(getObjectName());
+                sforce.console.setTabIcon('{!URLFOR($Resource.LiveText,'images/LTicon16.png')}',currentTabId);
+                sforce.console.openSubtab(currentTabId, '/'+objectId, true, getObjectName(), null, setOriginatingIcon);
+            }
+            sforce.console.getSubtabIds(currentTabId, function(subTabs){
+                currentSubTabId = subTabs.ids[0];
+                if(convHeaderStatus === 'Active'){
+                    if(!acceptedError)
+                        sforce.console.setTabUnsavedChanges(true, null, currentSubTabId);
+                    addTabCloseListener();
+                }
+            });
+        });
+
+        // Disable send button - by default
+        disableSendButton();
+        // Disable text area if no support numbers
+        if( getActiveSupportNumberId() === '' ||  getActiveSupportNumberId() == null){
+            j$("#textarea").attr('disabled', 'disabled');
+        }
+
+        if(chatMsgCounter > 0){
+            //disable the phone number fields in an active conversation when page is reloaded
+            disableConversationHeaderButtons();
+        }
+
+        // look-up end
+        //LiveTextChat.LT.getUsername(false);
+        // Function when keyup is pressed.
+        var max = 480;
+
+        j$('textarea').keyup(function(e) {
+            // Enable send button if textbox has value > 1
+            if(j$(this).val() != ""){
+                //Enable send button when endChat button is enabled or it's first outbound message
+                if(j$('#endChatBtn').is(':enabled') || (isOutBoundConversation() && (j$("#chatbox").html() == 0))){
+                    enableSendButton();
+                }
+                if (e.which != 13){
+                    var cs = j$(this).val();
+                    var len = parseInt(LiveTextChat.LT.utf8ByteLength(j$.trim(cs)));
+                    var messagelength;
+                    if (len % 160 === 0) {
+                        messagelength = len / 160;
+                        j$('#msgLength').text('(' + messagelength + ')');
+                    } else if (len > 0 && len < 2) {
+                        j$('#msgLength').text('(' + 1 + ')');
+                    } else if (len < 160) {
+                        j$('#msgLength').text('(' + 1 + ')');
+                    } else if (len < 320) {
+                        j$('#msgLength').text('(' + 2 + ')');
+                    } else if (len < 480) {
+                        j$('#msgLength').text('(' + 3 + ')');
+                    }
+                    if (len > 480) {
+                        j$('#characters').text(len);
+                        j$('#msgLength').text('(' + 3 + ')');
+                    } else {
+                        j$('#characters').text(len);
+                    }
+                }
+            } else {
+                disableSendButton();
+                LiveTextChat.LT.resetCount();
+            }
+        });
+
+        j$('textarea').keypress(function(e) {
+            var cs = j$(this).val();
+            if (j$.trim(cs).length > 0) {
+                var len = LiveTextChat.LT.utf8ByteLength(cs);
+                if (len > max) {
+                    this.value = this.value.substring(0, max);
+                }
+                if (e.which == 13) {
+                    //Trigger the #send button
+                    j$("#send").click();
+                    afterEnter = true;
+                    j$("#textarea").focus().val(j$("#textarea").val());
+                } else {
+                    // if len > 480 and del pressed enable to del characters.
+                    if (e.which != 8) {
+                        if (len == max) {
+                            return false;
+                        }
+                    }
+                }
+            } else {
+                // if user has not entered any value, and tries to hit enter key, prevent it.
+                if (e.which == 13) {
+                    return false;
+                }
+                LiveTextChat.LT.resetCount();
+            }
+        });
+
+        j$("textarea").on("change keyup paste", function(event) {
+            var len = j$.trim(this.value);
+            if(afterEnter){
+                j$("#textarea").val(len);
+                afterEnter = false;
+            }
+            var cs = LiveTextChat.LT.utf8ByteLength(len);
+            if (cs > max) {
+                //reassign substring of max length to text area value
+                j$("textarea").val(this.value.substring(0, max));
+                var substring = j$("textarea").val();
+                var ch = LiveTextChat.LT.utf8ByteLength(substring);
+                if (ch == 480) {
+                    alert(max + ' characters allowed, excess characters trimmed.');
+                    j$('#characters').text(max);
+                    j$('#msgLength').text('('+ 3 +')');
+                } else {
+                    alert(max + ' characters allowed.');
+                    j$("textarea").val('');
+                    j$('#characters').text(0);
+                    j$('#msgLength').text('('+ 0 +')');
+                }
+            }
+        });
+
+        function proceedWithSend(isPictureRequest){
+            var rawMessage = (isPictureRequest) ? sendingRequestMessage : j$("#textarea").val();
+            if ((j$.trim(rawMessage).length) > 0) {
+                //Encapsulate the string
+                var agentname = '{!JSENCODE(userName)}';
+                //Encapsulate the value of #textarea input field
+                //j$("#textarea").val('');
+                var escapeHtmlMessage = LiveTextChat.LT.escapeHtml(rawMessage);
+                var unescapeHtmlMessage = LiveTextChat.LT.escapeHtml(escapeHtmlMessage);
+                var newMessage = '';
+                newMessage = j$('<div/>').html(unescapeHtmlMessage).text();
+                //disable the phone number fields for outbound messages
+                disableConversationHeaderButtons();
+                /* Remote Action - start*/
+                if (rawMessage != "") {
+                    chatMsgCounter++;
+                    //htmlEntities => Convert special character into HTML readable string
+                    /* 1. LT-531 - 12/19/2014 (v1.38): Updated the below code to remove the div as it is adding extra line break at the end. Replaced it with <br>
+                    2. LT-531 - 12/31/2014 (v1.39): Reverted the code to include div tag as it has the regression on displaying the error messages when the SMS relay failed. Hence made the div to be displayed inline and added the br tag to start the message in new line.
+                    */
+                    //j$("#chatbox").append('<label class="username">' + j$.trim(agentname) + ':</label> ' + j$.trim(newMessage));
+                    j$("#chatbox").append('<br/>');
+                    var appednString = '<div style="display: inline;" class="senttxtMsg-' + chatMsgCounter + '"><label class="username">' + j$.trim(agentname) + ':</label> ';
+                    var connectionIsOnline = checkNetConnection();
+                    appednString += connectionIsOnline === false ? '<span style="color: red;">(!)</span> ' + j$.trim(newMessage) + '</div>' : j$.trim(newMessage) + '</div>';
+                    j$("#chatbox").append(appednString);
+                    //Automatically scroll at the bottom of the #chatbox when the user submit new message
+                    j$("#chatbox").linkify();
+                    scrollChatBox(false);
+                    LiveTextChat.LT.playSendReceiveAudio(false);
+                    //Clear the input field #textarea
+                    j$("#textarea").val('');
+                    /* reset character counts*/
+                    LiveTextChat.LT.resetCount();
+                }
+                /* Remote Action - 1 - start */
+                //if it is the first outbound message create the conversation header and initial SMS record
+                if(isFirstOutboundMessage){
+                            insertConversationHeader(rawMessage, newMessage, chatMsgCounter, objectId, isPictureRequest, false, function(){
+                                document.cookie = 'phone='+getOriginatingNumber();
+                                document.cookie = 'cvid='+currentConversationRecordId;
+
+                            });
+                }else if(connectionIsOnline){
+                    LiveTextChat.LT.handleMessageSend(rawMessage, newMessage, chatMsgCounter, isPictureRequest);
+                }
+            }
+            if(files.length > 0){
+                sendMMS(false);
+            }
+        }
+
+        function handleSend(isPictureRequest){
+            console.log('Handling send...');
+            displayOriginatingNumberError('');            
+            isFirstOutboundMessage = isOutBoundConversation() && (j$("#chatbox").html() == 0);
+            disableSendButton();
+            if(isFirstOutboundMessage){
+                var phone = getOriginatingNumber();
+                if(isPhoneInvalid){
+                  	displayOriginatingNumberError(mostRecentOriginatingNumberError);
+                    enableSendButton();
+               }else{               
+                    validatePhoneNumbers(getActiveSupportNumberId(), phone,
+                        function(result){
+                            console.log(result);
+                            var jsonResult = j$.parseJSON(LiveTextChat.LT.unescapeHtml(result));
+                            if (!jsonResult.success) {
+                                displayOriginatingNumberError(jsonResult.errorMessage);
+                                enableSendButton();
+                            }else{
+                                optCheck(function(result){
+                                    if(result == null){
+                                        enableEndSessionButton();
+                                        enableLinkButton();
+                                        proceedWithSend(isPictureRequest);
+                                    }else{
+                                        alert(decodeHtmlNumeric(result));
+                                        enableSendButton();
+                                    }
+                                });
+                            }
+                        }
+                    );
+                }
+            }else{
+                optCheck(function(result){
+                    if(result == null||result[fldStatus]==1){
+                        proceedWithSend(isPictureRequest);
+                    }else{
+                        alert(decodeHtmlNumeric(result));
+                        enableSendButton();
+                    }
+                });
+            }
+        }
+
+        //send button
+        j$("#send").click(function(e) {
+            handleSend(false);
+        });
+        //picture request
+        j$("#camera").click(showAttachOptions);
+        j$("#closeAttachOptionsButton").click(hideAttachOptions);
+        j$("#sendImageRequestButton").click(function(e){
+            hideAttachOptions();
+            handleSend(true);
+        });
+
+        if(convHeaderStatus === 'Ended'){
+            performEndChat();
+        }
+
+        j$('[id$="endChatBtn"]').click(function() {
+            disableEndSessionButton();
+        });
+
+        if(conversationLoadError == false)
+            enableEndSessionButton();
+
+        if(isOutBoundConversation())
+            if(j$("#chatbox").text() == ''){
+                unlockMainTab();
+                disableEndSessionButton();
+            }
+        }
+
+        function showAttachOptions() {
+            j$("#controls").hide();
+            j$("#attachOptionsArea").show();
+        }
+
+        function hideAttachOptions() {
+            j$("#attachOptionsArea").hide();
+            j$("#controls").show();
+        }
+
+        function insertConversationHeader(rawMessage, newMessage, chatMsgCounter, objectId, isPictureRequest, isMMS, callback){
+            ConversationInitialization = new Object();
+            ConversationInitialization.supportNumber = getActiveSupportNumberId();
+            ConversationInitialization.originatingNumber = getOriginatingNumber();
+            ConversationInitialization.conversationType = 'Outbound';
+            ConversationInitialization.message = newMessage;
+            ConversationInitialization.objectId = objectId;
+            ConversationInitialization.originatingFormattedNumber = phoneFormatter(ConversationInitialization.originatingNumber, locale);
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.LiveTextChatController.insertConversationHeaderLinkObject}',
+                ConversationInitialization,
+                function(result, event){
+                    conversationRecords = result;
+                    var isAcceptedInboundConversation = false;
+                    if(event.status){
+                        setConversationHeaderList(JSON.stringify(result));
+                        currentConversationRecordId = result[0].Id;
+                        initPopover();
+                        addConversationHeaderIdToSessionStorage(currentConversationRecordId);
+
+                        var variableOne = conversationRecords;
+                        //setting object link for outbound messages
+                        if(false){
+                            //for performence
+                        }
+                        <apex:repeat value="{!customObjectsForManualLinking}" var="element">
+                            else if(variableOne[0][fldRef{!element.recordType}] != null){
+                                var msg = {
+                                  'objectprefix':'{!element.recordPrefix}'
+                                  ,'objectid':variableOne[0][fldRef{!element.recordType}][fldId]
+                                  ,'objecttype':'{!element.recordType}'
+                                  ,'objectlinkname':variableOne[0][fldRef{!element.recordType}]['{!element.recordNameField}']
+                                  ,'linked':'{!element.isLinked}'
+                                  ,'objectplurallabel':'{!element.recordLabelPlural}'
+                                };
+                                sforce.console.getEnclosingPrimaryTabId(function(result){
+                                  msg['currentPrimaryTabID'] = result.id;//currentPrimaryTabId
+                                  sforce.console.fireEvent( 'recordLinkedFromDetailJS', JSON.stringify(msg), function(){} );
+                                });
+                            }
+                        </apex:repeat>
+                        convHeaderStatus = result[0][fldConvHeaderStatus];
+                        j$('[id$=convHeaderStatus]').val(result[0][fldConvHeaderStatus]);
+                        conversationObj = getConversationHeaderList();
+
+                        if (convHeaderStatus == 'Ended') {
+                            j$('[id$=isconversationEnded]').val(true);
+                        }
+                        isAcceptedInboundConversation = result[0][fldConversationType] == 'Inbound';
+                    }else{
+                        console.log('event' + event.message);
+                    }
+                    if(isAcceptedInboundConversation){
+                        Visualforce.remoting.Manager.invokeAction(
+                            '{!$RemoteAction.LiveTextChatController.getInitialMessage}',
+                            currentConversationRecordId,
+                            function(result, event){
+                                if (event.status){
+                                    if(result){
+                                        var currentText = j$("#chatbox").html();
+                                        j$('#chatbox').html('');
+                                        LiveTextChat.LT.displayMessageList(result, false);
+                                        j$("#chatbox").append(currentText);
+                                        j$("#chatbox").linkify();
+                                        scrollChatBox(false);
+                                    }
+                                }
+                                if(!isMMS){
+                                    LiveTextChat.LT.handleMessageSend(rawMessage, newMessage, chatMsgCounter, isPictureRequest);
+                                }
+                            }
+                        );
+                    }else{
+                        if(!isMMS){
+                            LiveTextChat.LT.handleMessageSend(rawMessage, newMessage, chatMsgCounter, isPictureRequest);
+                        }
+                    }
+
+                    if(callback != null){
+                        callback();
+                    }
+                }
+            );
+        }
+
+
+        function performAfterEndChat(){
+            convHeaderStatus = j$('[id$="convHeaderStatus"]').val();
+            if(convHeaderStatus === 'Ended'){
+                removeTabCloseListener();
+                performEndChat();
+            }else{
+                convHeaderStatus = 'Ended';
+                disableEndSessionButton();
+            }
+        }
+
+        function disableChatButtons(conversationHasEnded){
+            disableEndSessionButton();
+            disableSendButton();
+            disableAttachButton();
+            j$("#textarea").attr('disabled', 'disabled');
+            if(conversationHasEnded){
+                j$("#textarea").attr('placeholder', '{!$Label.EndedChatSendMsgPlaceholderLbl}');
+            }
+            j$('[id$="send"]').addClass("sendButtonDisabled");
+            LiveTextChat.LT.resetCount();
+        }
+
+        function disableChatButtonsAcceptedError(conversationHasEnded){
+            disableEndSessionButton();
+            disableSendButton();
+            disableAttachButton();
+            j$("#textarea").attr('disabled', 'disabled');
+            if(conversationHasEnded){
+                j$("#textarea").attr('placeholder', '{!$Label.EndedChatSendMsgError}');
+            }
+            j$('[id$="send"]').addClass("sendButtonDisabled");
+            LiveTextChat.LT.resetCount();
+        }
+
+        function performEndChat(){
+            sforce.console.setTabUnsavedChanges(false, null, currentSubTabId);
+            disableChatButtons(true);
+            unlockMainTab();
+        }
+
+        var removedListener = function (result) {
+            alert('The enclosing primary tab is about to be closed. Tab ID:');
+        };
+
+        function lockMainTab(){
+            sforce.console.disableTabClose(true, currentTabId, function(){
+                document.cookie = 'phone='+getOriginatingNumber() ;
+                document.cookie = 'cvid='+currentConversationRecordId ;
+            });
+        }
+
+        function unlockMainTab(){
+            sforce.console.disableTabClose(false, currentTabId, function(){
+                document.cookie = 'phone=';
+                document.cookie = 'cvid='
+            });
+
+        }
+
+        function addTabCloseListener(){
+            console.log('adding tab close listener');
+            var obj = {};
+            obj['cid'] = currentConversationRecordId;
+            obj['tabId'] = currentTabId;
+            obj['acceptErr'] = acceptedError;
+            sforce.console.fireEvent('AddTabCloseListener', JSON.stringify(obj));
+        }
+
+        function removeTabCloseListener(){
+            console.log('removing tab close listener');
+            var obj = {};
+            obj['tabId'] = currentTabId;
+            //sforce.console.fireEvent('RemoveTabCloseListener', JSON.stringify(obj));
+        }
+
+        function decodeHtmlNumeric( str ) {
+            return str.replace( /&#([0-9]{1,7});/g, function( g, m1 ){
+                    return String.fromCharCode( parseInt( m1, 10 ) );
+            }).replace( /&#[xX]([0-9a-fA-F]{1,6});/g, function( g, m1 ){
+                    return String.fromCharCode( parseInt( m1, 16 ) );
+            });
+        }
+
+        function turnRedAfterTimout(time, currentTabId, currentSubTabId) {
+            if(conversationAlertOn){
+                if(conversationShouldTurnRedMap[currentTabId]){
+                    sforce.console.setTabStyle('background:#c81414;', currentTabId);
+                    sforce.console.setTabTextStyle('color:#ffffff;', currentTabId);
+                }
+                if(conversationShouldTurnRedMap[currentSubTabId]){
+                    sforce.console.setTabStyle('background:#c81414;', currentSubTabId, null);
+                    sforce.console.setTabTextStyle('color:#ffffff;', currentSubTabId, null);
+                }
+            }else{
+                setTimeout(function(){
+                    conversationAlertOn = true;
+                    if(conversationShouldTurnRedMap[currentTabId]){
+                        sforce.console.setTabStyle('background:#c81414;', currentTabId);
+                        sforce.console.setTabTextStyle('color:#ffffff;', currentTabId);
+                    }
+                    if(conversationShouldTurnRedMap[currentSubTabId]){
+                        sforce.console.setTabStyle('background:#c81414;', currentSubTabId, null);
+                        sforce.console.setTabTextStyle('color:#ffffff;', currentSubTabId, null);
+                    }
+                }, time);
+            }
+        }
+
+        function showLoadingProgress(){
+            j$('[id$="pageStatus"]').show();
+            j$('[id$="chatPanel"]').hide();
+        }
+
+         function hideLoadingProgress(){
+            j$('[id$="pageStatus"]').hide();
+            j$('[id$="chatPanel"]').show();
+        }
+</Script>
+    <div id="pageStatus"  class="col span_1_of_3">
+    <apex:outputPanel layout="block">
+        <table style="margin:0 auto;">
+            <tr>
+                <td><img src="/img/loading32.gif" width="32" height="32" /></td>
+            </tr>
+        </table>
+    </apex:outputPanel>
+    </div>
+    <div class="section group">
+        <div id="chatPanel" class="col span_1_of_3">
+            <apex:form StyleClass="form_custom " id="apexForm">
+                <apex:inputHidden value="{!convHeaderStatus}" id="convHeaderStatus" />
+                <div class="container-fluid" id="header"
+                    style="border: none; padding-top: 8px; padding-bottom: 8px; padding-left: 0px; padding-right: 0px;">
+                    <div style='margin: 0px 0px 0px 0px;'>
+                        <apex:selectList value="{!activeSupportNumber}"
+                            style="width: 230px;height: 29px;" id="activeSupportNumber"
+                            title="Please select the phone number you would like to send text messages from."
+                            multiselect="false" size="1" disabled="{!numbersDisabled}">
+                            <apex:selectOptions value="{!numbers}" />
+                        </apex:selectList>
+                        <img src="{!URLFOR($Resource.LiveText,'images/help_orange.png')}"
+                            title="Please select the phone number you would like to send text messages from."
+                            style="display: inline-block; margin-left: 10px; cursor: pointer; vertical-align: top; margin-top: 6px;"></img>
+                    </div>
+                    <div>
+                        <apex:inputText value="{!unNormalizedOriginatingNumber}"
+                            id="originatingFormattedNumber" style="width: 130px;height: 29px;"
+                            styleClass="txt-mask" disabled="{!numbersDisabled}" />
+                        <label
+                            style="margin-bottom: 3px; display: inline-block; margin-left: 10px; vertical-align: top; margin-top: 4px;">Recipient
+                            Number</label> <label style="color: red;" id="originatingNumberError"></label>
+                    </div>
+                    <apex:image id="popover" value="/s.gif"
+                        styleClass="clipImg clipImg_hover" alt="popover"
+                        style="margin:10px;"
+                        rendered="{!AND(NOT(isconversationEnded), OR($ObjectType.Case.accessible, $ObjectType.Contact.accessible, $ObjectType.Lead.accessible))}" />
+                    <input type="button"
+                        onclick="disableChatButtons(false); endChatAction(currentConversationRecordId);"
+                        value="{!$Label.EndChatBtnLbl}" id="endChatBtn"
+                        class="endChat zen-btn pull-right" style="margin-right:16px;font-size: 13px;" />
+                    <div id="popover_content" style="display: none;">
+                        <table class="table h_tbl">
+                            <tbody>
+                                <apex:repeat value="{!customObjectsForManualLinking}" var="element">
+                                    <apex:outputPanel rendered="{!element.rendered}" layout="none">
+                                    <tr class="object" id="{!element.recordType}">
+                                        <td class="icon_td"><i class="{!element.recordType}ImgForManualLinking"></i></td>
+                                        <td><label style="font-size: 13px; font-weight: bold;">{!element.recordLabel}</label></td>
+                                        <td class="pull-right"><a href="javascript:void(0);"
+                                            id="{!element.recordType}Search"><i class="icon-search"></i></a></td>
+                                    </tr>
+                                    <tr class="objValue">
+                                        <td><input type="checkbox" id="{!element.recordType}CheckBox" value=""
+                                            style="display: none;" onclick="fireLinkingEvent(this);" /></td>
+                                        <td colspan="2"><p id="{!element.recordType}LookupText">No open
+                                                {!element.recordLabelPlural}</p></td>
+                                    </tr>
+                                    </apex:outputPanel>
+                                </apex:repeat>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div Class="lookup_div" id="lookup">
+                        <apex:repeat value="{!customObjectsForManualLinking}" var="element">
+                            <input type="hidden" name="{!element.recordType}Id_hidden" id="{!element.recordType}Id_hidden" value="{!element.recordId}"/>
+                            <input type="hidden" name="{!element.recordType}Name_hidden" id="{!element.recordType}Name_hidden" value="{!element.recordName}"/>
+                        </apex:repeat>
+                    </div>
+                </div>
+                <apex:outputPanel id="dummy2">
+                    <apex:outputText value="{!unNormalizedOriginatingNumber}"
+                            id="originatingNumber" styleClass="display_none"/>
+                    <apex:outputText id="hiddenoptxtLTChat"  styleClass="display_none"
+                        value="{!ConversationHeaderRecords}"  />
+                    <apex:outputText id="hiddenconvended"
+                        value="{!isconversationEnded}" styleClass="display_none" />
+                    <apex:outputText id="hiddenconvtype" value="{!conversationType}"
+                        styleClass="display_none" />
+                    <apex:outputText id="hiddeninitialmessage"
+                        value="{!initialMessage}" styleClass="display_none" />
+                    <apex:outputText id="hiddenobjectname" value="{!objectName}"
+                        styleClass="display_none" />
+                    <apex:outputText id="hiddenphonenumbers" value="{!MyPhoneNumbers}"
+                        styleClass="display_none" />
+                    <apex:outputText id="hiddenconversationRecordId"
+                        value="{!conversationRecordId}" styleClass="display_none" />
+                    <apex:outputText id="hiddenisconversationinqueue"
+                        value="{!isConversationInQueue}" styleClass="display_none" />
+                </apex:outputPanel>
+                <apex:actionFunction name="getCurrentConversationHeaderList"
+                    action="{!getCurrentConversationHeaderList}"
+                    oncomplete="updatePopover();LiveTextChat.LT.persistObjectLinkingOnRefresh();return false;"
+                    rerender="hiddenoptxtLTChat, customObjectLinkingPanel" />
+                <apex:actionFunction name="initConversation"
+                    action="{!InitializeConversation}"
+                    oncomplete="onInitializationComplete(); formatDisplayedPhoneField();"
+                    rerender="convHeaderStatus,activeSupportNumber,originatingNumber, originatingFormattedNumber, hiddenconvtype, hiddeninitialmessage, hiddenoptxtLTChat, hiddenobjectname, hiddenphonenumbers, hiddenconversationRecordId, hiddenisconversationinqueue">
+                    <apex:param name="parm2" assignTo="{!conversationRecordId}" value="" />
+                    <apex:param name="parm3" assignTo="{!originatingNumber}" value="" />
+                    <apex:param name="parm4" assignTo="{!convoTypeParam}" value="" />
+                    <apex:param name="parm5" assignTo="{!phoneType}" value="" />
+                    <apex:param name="parm6" assignTo="{!oid}" value="" />
+                    <apex:param name="parm7" assignTo="{!objectPrefix}" value="" />
+                </apex:actionFunction>
+                <apex:actionFunction name="linkRecords"
+                    action="{!associateSelectedRecords}" rerender="dummy2"
+                    oncomplete="LiveTextChat.LT.persistObjectLinkingOnRefresh();callConversationDetailLink('{!objectPrefix}', '{!linkedObjId}', '{!isRecordLinked}');if(!isEndedConversation()) enableEndSessionButton();">
+                    <apex:param name="parm0" assignTo="{!conversationRecordId}" value="" />
+                    <apex:param name="parm1" assignTo="{!objectPrefix}" value="" />
+                    <apex:param name="parm2" assignTo="{!linkedObjId}" value="" />
+                    <apex:param name="parm3" assignTo="{!isRecordLinked}" value="" />
+                </apex:actionFunction>
+                <apex:actionFunction name="_reloadConversationFromServer"
+                    action="{!ReloadConversation}"
+                    oncomplete="onReloadConversationFromServerComplete();"
+                    rerender="hiddeninitialmessage">
+                    <apex:param name="param1" assignTo="{!conversationRecordId}" value="" />
+                </apex:actionFunction>
+                <apex:actionFunction name="_endChatAction"
+                        action="{!endChat}"
+                        oncomplete="performAfterEndChat();"
+                        rerender="dummy, lt_pageMessages, convHeaderStatus">
+                        <apex:param name="param1" assignTo="{!conversationRecordId}" value="" />
+                </apex:actionFunction>
+            </apex:form>
+            <div id="chatbox"
+                style="border-left: none; border-right: none; border-bottom: none; border-color: #b8c1c4;"></div>
+            <div id="controls"
+                style="border-left: none; border-right: none; border-color: #b8c1c4;">
+                <span id="txtDiv"><textarea id="textarea"
+                        style="box-shadow: inset 0 0px 0px rgba(0, 0, 0, 0.075); border: none;; margin: 8px 0px 8px 0px;"
+                        placeholder="{!$Label.ActiveChatSendMsgPlaceholderLbl}"></textarea>
+                </span> <span id="attDiv" style="margin: 0px 0px 0px 10px"><img
+                    id="camera" height="31" width="28" style="cursor: pointer; height:31px"
+                    src="{!URLFOR($Resource.LiveText,'images/pictureattachicon.png')}"></img></span>
+                    <input style="display:none;" type="file" id="files" accept="image/gif, image/jpeg, image/png" />
+                <span style="float: right; margin-right: 66px;">
+                    <div class="spn" id="characters"
+                        style="margin-right: 0px; padding-top: 5px;">0</div>
+                    <button type="button" id="send" class="zen-btn"
+                        style="margin-left: 25px;font-size: 13px;">Send</button>
+                    <div style="margin-right: 0px; padding-top: 5px;" class="spn1"
+                        id="msgLength">(0)</div>
+                </span>
+            </div>
+            <div id="attachOptionsArea">
+                <div id="sendImageRequestButton">Send a request for an image</div>
+                <div id="sendImageMMS" onclick='j$("#files").trigger("click");' >Attach Image</div>
+                <div id="removeAttachedImage"  onclick='removeAttachedFile()'>Remove Image</div>
+                <div id="closeAttachOptionsButton" class="actionButton"
+                    title="Click to cancel">Cancel</div>
+            </div>
+        </div>
+    </div>
+    <script>
+
+    function removeAttachedFile()
+    {
+        
+        document.getElementById('files').value = '';       
+        files = '';
+        j$('#camera').attr('src', cameraImg);
+        hideAttachOptions();  
+        j$('#removeAttachedImage').hide();
+        if(j$('#textarea').val().length == 0)
+        {
+            disableSendButton();
+        }
+    }    
+
+
+    function fireLinkingEvent(htmlObj){
+        var msg = {
+            'objectprefix':j$(htmlObj).attr('objectPrefix')
+            ,'objectid':j$(htmlObj).attr('objectId')
+            ,'objecttype':j$(htmlObj).attr('objecttype')
+            ,'objectlinkname':j$(htmlObj).attr('objectLinkName')
+            ,'linked':false
+            ,'objectplurallabel':j$(htmlObj).attr('objectplurallabel')
+        };
+        msg['currentConversationRecordId'] = currentConversationRecordId;
+        sforce.console.getFocusedPrimaryTabId(function(result){
+          msg['currentPrimaryTabID'] = result.id;
+          msg['currentPrimaryTabID'] = result.id;//currentPrimaryTabID
+          sforce.console.fireEvent( 'recordLinkedFromChat', JSON.stringify(msg), function(){} );
+        });
+    }
+
+    var LiveTextChat = LiveTextChat || {};
+    LiveTextChat.LT = (function(){
+        "use strict";
+        // declare variables here
+        var polling_time_interval = 750; //This is in ms and specifies the time duration to poll the new subtab for any object created.
+
+        //===Methods=================================
+        // Following functions are exposed only private functions are never exposed and cannot be called
+        //Call the function
+        function utf8ByteLength(str){
+            if (!str) return 0;
+            var escapedStr = encodeURI(str);
+            var match = escapedStr.match(/%/g);
+            return match ? (escapedStr.length - match.length * 2) : escapedStr.length;
+        }
+
+        function getUsername(suppressAudio) {
+            //Call the function with string parameter
+            var initialMessage = getInitialMessageList();
+            if (initialMessage.length > 0) {
+                var message = jQuery.parseJSON(initialMessage)
+                if(message){
+                    displayMessageList(message, suppressAudio);
+                    j$("#chatbox").linkify();
+                    scrollChatBox(false);
+                }
+            }
+        }
+
+        function displayMessageList(messageList, suppressAudio){
+            for (var i = 0; i < messageList.length; i++) {
+                if (messageList[i][source] == liveText) {
+                    displayInboundMessage(messageList[i][fldOriginatingNumber], messageList[i][fldMessage], false, suppressAudio);
+                } else {
+                    displayOutboundMessage(username, messageList[i][fldMessage], messageList[i][fldSource], messageList[i][fldSentToCustomer], false, suppressAudio);
+                }
+            }
+        }
+
+        function playSendReceiveAudio(suppressAudio) {
+            // audio tag to play sound
+            j$('<audio  id="chatAudio" class="audioPlayer"><source src="{!URLFOR($Resource.LiveText, 'sounds/sendreceive.ogg')}" type="audio/ogg"><source src="{!URLFOR($Resource.LiveText, 'sounds/sendreceive.mp3')}" type="audio/mpeg"><source src="{!URLFOR($Resource.LiveText, 'sounds/sendreceive.wav')}" type="audio/wav"></audio>').appendTo('body');
+            var audio = j$("#chatAudio");
+            audio[0].load();//suspends and restores all audio element
+            if(!suppressAudio)
+                audio[0].play();
+        }
+
+        function displayOutboundMessage(username, autoMessage, msgSource, sentToCustomer, autoScroll, suppressAudio) {
+            autoMessage = j$.trim(autoMessage);
+            if(isImageURL(autoMessage)){
+                autoMessage = getImageHyperlink(autoMessage);
+            }
+            //If the #chatbox is empty, no line break on the first line
+            if (j$("#chatbox").html() != 0) {
+                j$("#chatbox").append('<br/>');
+            }
+            var displayName = msgSource == "{!ITRName}" ?  "{!ITRName}" : msgSource == "{!OptInName}" ? "{!$Label.TXT_OPT_Messaging}" : username;
+            var className =  msgSource == "{!ITRName}" || msgSource == "{!OptInName}" ?  "itr" : "username";
+            j$("#chatbox").append('<label class="' + className + '">' + j$.trim(displayName) + ':</label> ' + autoMessage);
+            //TODO: if there is an error then we need to append error icon and error message
+            if (sentToCustomer === false) {
+                j$("#chatbox").append('<img src="/s.gif" class="errorImg" title="{!$Label.SMSNotDeliveredLbl}"/>');
+            }
+            //Automatically scoll at the bottom of the #chatbox when the user submit new message
+            if(autoScroll == null || autoScroll == true){
+                scrollChatBox(false);
+            }
+            LiveTextChat.LT.playSendReceiveAudio(suppressAudio);
+        }
+
+        function ucwords(str) {
+            return (str + '').replace(/^([a-z\u00E0-\u00FC])|\s+([a-z\u00E0-\u00FC])/g, function(j$1) {
+                return j$1.toUpperCase();
+            });
+        }
+
+        function persistObjectLinkingOnRefresh() {
+            var conversationObj = getConversationHeaderList();
+            if(conversationObj){
+                var records = JSON.parse(conversationObj);
+                if(records){
+                    for(var i = 0; i < records.length; i++){
+                        <apex:repeat value="{!customObjectsForManualLinking}" var="element">
+                            if(records[i][fldRef{!element.recordType}] != null){
+                                {!element.recordType}Name = records[i][fldRef{!element.recordType}]['{!element.recordNameField}'];
+                                {!element.recordType}Id = records[i][fldRef{!element.recordType}][fldId];
+                                j$('#{!element.recordType}LookupText').text({!element.recordType}Name);
+                                j$('#{!element.recordType}CheckBox').attr('checked','checked');
+                                j$('#{!element.recordType}CheckBox').prop('checked',true);
+
+                                j$('#{!element.recordType}CheckBox').attr('objectPrefix','{!element.recordPrefix}');
+                                j$('#{!element.recordType}CheckBox').attr('objectid',records[i][fldRef{!element.recordType}][fldId]);
+                                j$('#{!element.recordType}CheckBox').attr('objecttype','{!element.recordType}');
+                                j$('#{!element.recordType}CheckBox').attr('objectlinkname',{!element.recordType}Name);
+                                j$('#{!element.recordType}CheckBox').attr('objectpluralLabel','{!element.recordLabelPlural}');
+                                j$('#{!element.recordType}CheckBox').attr('onclick', 'fireLinkingEvent(this)');
+
+                                j$('#{!element.recordType}CheckBox').show();
+                                is{!element.recordType}CheckBoxVisible = 1;
+                            }
+                        </apex:repeat>
+                    }
+                }
+            }
+        }
+
+        // Use the browser's built-in functionality to quickly and safely escape the
+        // string
+        function escapeHtml(str) {
+            var div = document.createElement('div');
+            div.appendChild(document.createTextNode(str));
+            return div.innerHTML;
+        };
+
+        // UNSAFE with unsafe strings; only use on previously-escaped ones!
+        function unescapeHtml(escapedStr) {
+            var div = document.createElement('div');
+            div.innerHTML = escapedStr;
+            var child = div.childNodes[0];
+            return child ? child.nodeValue : '';
+        };
+
+        // Reset character count and message count
+        function resetCount() {
+             /* reset character counts*/
+             j$('#msgLength').text('(' + 0 + ')');
+             j$('#characters').text(0);
+        }
+
+        //sends message when send button is clicked
+        function handleMessageSend(rawMessage, newMessage, chatMsgCounter, isPictureRequest) {
+            MessagePayload = new Object();
+            MessagePayload.rawMessage = rawMessage;
+            MessagePayload.message = newMessage;
+            MessagePayload.messageId = chatMsgCounter;
+            MessagePayload.conversationId = currentConversationRecordId;
+            MessagePayload.originatingNumber = getOriginatingNumber();
+            MessagePayload.supportNumber = getActiveSupportNumber();
+            MessagePayload.isFirstOutboundMessage = isFirstOutboundMessage;
+            MessagePayload.isPictureRequest = isPictureRequest;
+            Visualforce.remoting.Manager.invokeAction(
+                    '{!$RemoteAction.LiveTextChatController.getMessagePayloadResponseWithPicture}',
+                    MessagePayload,
+                    handleCallbackResult);
+            conversationAlertOn = false;
+            conversationShouldTurnRedMap[currentTabId] = false;
+            sforce.console.setTabStyle(null, currentTabId, null);
+            sforce.console.setTabTextStyle(null, currentTabId);
+            conversationShouldTurnRedMap[currentSubTabId] = false;
+            sforce.console.setTabStyle(null, currentSubTabId, null);
+            sforce.console.setTabTextStyle(null, currentSubTabId, null);
+        }
+
+        function displayInsertRecordError(message, messageId) {
+            //htmlEntities => Convert special character into HTML readable string
+            j$(".senttxtMsg-" + messageId).last().append('<img src="/s.gif" class="errorImg" title=\'' + j$.trim(message) + '\'/>');
+            //Automatically scoll at the bottom of the #chatbox when the user submit new message
+            scrollChatBox(false);
+        }
+
+        function handleCallbackResult(result, event){
+            var jsonResult = j$.parseJSON(LiveTextChat.LT.unescapeHtml(result));
+            if(event.status){
+                if(!jsonResult.success){
+                    //handle errors
+                    displayInsertRecordError(jsonResult.errorMessage, jsonResult.messageId);
+                }else{
+                    if(jsonResult.message != null){
+                        var markup = j$(".senttxtMsg-" + jsonResult.messageId).html();
+                        markup = markup.replace(sendingRequestMessage, jsonResult.message);
+                        j$(".senttxtMsg-" + jsonResult.messageId).html(markup);
+                        j$("#chatbox").linkify();
+                        scrollChatBox(true);
+                    }
+                    if(isFirstOutboundMessage){
+                        var currentPagePhoneNumber = getOriginatingNumber().replace(/\D/g,'');
+                        if(currentPagePhoneNumber != originalPhoneNumber){
+                            console.log('number changed');
+                            redirectPrimaryTab(getOriginatingNumber());
+                        }else{
+                            sforce.console.setTabUnsavedChanges(true, null, currentSubTabId);
+                            addTabCloseListener();
+                            enableEndSessionButton();
+                            lockMainTab();
+                        }
+                    }
+                    // at least one message successfully sent, disable phone number buttons
+                    disableConversationHeaderButtons();
+                    enableLinkButton();
+                    enableEndSessionButton();
+                    lockMainTab();
+                }
+            }else{
+                console.log(event);
+            }
+        }
+
+        return{
+            getUsername: getUsername,
+            persistObjectLinkingOnRefresh:persistObjectLinkingOnRefresh,
+            utf8ByteLength:utf8ByteLength,
+            escapeHtml:escapeHtml,
+            unescapeHtml:unescapeHtml,
+            resetCount:resetCount,
+            playSendReceiveAudio:playSendReceiveAudio,
+            handleMessageSend:handleMessageSend,
+            handleCallbackResult:handleCallbackResult,
+            displayMessageList:displayMessageList,
+            displayInsertRecordError:displayInsertRecordError
+        };
+    }());
+</script>
+</apex:page>

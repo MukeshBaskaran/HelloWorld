@@ -1,0 +1,380 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionOverrides>
+        <actionName>Accept</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>CancelEdit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Clone</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Delete</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Edit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Follow</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>List</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>New</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>SaveEdit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Tab</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>View</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <allowInChatterGroups>false</allowInChatterGroups>
+    <compactLayoutAssignment>SYSTEM</compactLayoutAssignment>
+    <deploymentStatus>Deployed</deploymentStatus>
+    <deprecated>false</deprecated>
+    <description>LiveText Number</description>
+    <enableActivities>false</enableActivities>
+    <enableBulkApi>true</enableBulkApi>
+    <enableFeeds>false</enableFeeds>
+    <enableHistory>false</enableHistory>
+    <enableReports>false</enableReports>
+    <enableSearch>true</enableSearch>
+    <enableSharing>true</enableSharing>
+    <enableStreamingApi>true</enableStreamingApi>
+    <fields>
+        <fullName>Auto_Response_Message__c</fullName>
+        <deprecated>false</deprecated>
+        <description>This message is sent automatically when an inbound customer text is received during business hours.</description>
+        <externalId>false</externalId>
+        <inlineHelpText>This message is sent automatically when an inbound customer text is received during business hours.</inlineHelpText>
+        <label>Auto-Response Message</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>TextArea</type>
+    </fields>
+    <fields>
+        <fullName>Business_Hours__c</fullName>
+        <deleteConstraint>SetNull</deleteConstraint>
+        <deprecated>false</deprecated>
+        <externalId>false</externalId>
+        <inlineHelpText>Business support hours for this phone number. Business Hours can be managed via Setup.</inlineHelpText>
+        <label>Business Hours</label>
+        <referenceTo>BusinessHours</referenceTo>
+        <relationshipLabel>LiveText Numbers</relationshipLabel>
+        <relationshipName>LiveText_Numbers</relationshipName>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Chat_End_Message__c</fullName>
+        <deprecated>false</deprecated>
+        <description>This message is sent automatically to a customer when a text session is ended by an agent.</description>
+        <externalId>false</externalId>
+        <inlineHelpText>This message is sent automatically to a customer when a text session is ended by an agent.</inlineHelpText>
+        <label>Chat End Message</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>TextArea</type>
+    </fields>
+    <fields>
+        <fullName>CreateEvent__c</fullName>
+        <defaultValue>false</defaultValue>
+        <deprecated>false</deprecated>
+        <externalId>false</externalId>
+        <label>CreateEvent</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>CreateTask__c</fullName>
+        <defaultValue>true</defaultValue>
+        <deprecated>false</deprecated>
+        <externalId>false</externalId>
+        <label>CreateTask</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Critical_Alert_Time__c</fullName>
+        <deprecated>false</deprecated>
+        <description>Seconds after conversation tab with no response from LiveText Agent turn red.</description>
+        <externalId>false</externalId>
+        <inlineHelpText>The number of seconds before the text session tab alerts the agent to respond</inlineHelpText>
+        <label>Critical Alert Time (seconds)</label>
+        <precision>18</precision>
+        <required>false</required>
+        <scale>0</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Formatted_Support_Number__c</fullName>
+        <deprecated>false</deprecated>
+        <description>Sanitized Support Number</description>
+        <externalId>false</externalId>
+        <formula>International_Live_Text_Number__c</formula>
+        <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+        <label>Formatted Support Number</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>ISOCountryCode__c</fullName>
+        <defaultValue>&quot;US&quot;</defaultValue>
+        <description>ISO 3166-1 alpha-2 country code</description>
+        <externalId>false</externalId>
+        <label>ISO Country Code</label>
+        <length>2</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>ITR_Enabled__c</fullName>
+        <defaultValue>false</defaultValue>
+        <deprecated>false</deprecated>
+        <description>Whether or not ITR, and it&apos;s associated workflows, is enabled for this number.</description>
+        <externalId>false</externalId>
+        <inlineHelpText>ITR automates opt-out tracking, routing to agent queues(via Omnichannel),case creation,off-hour handling and other interactions.Review the Admin Guide for more info: 
+        http://www.heywire.com
+        /resources/(Documentation tab)</inlineHelpText>
+        <label>ITR Enabled</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Initial_Message__c</fullName>
+        <deprecated>false</deprecated>
+        <description>This message is sent automatically to a customer when a text session is started by an agent.</description>
+        <externalId>false</externalId>
+        <inlineHelpText>This message is sent automatically to a customer when a text session is started by an agent.</inlineHelpText>
+        <label>Initial Message</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>TextArea</type>
+    </fields>
+    <fields>
+        <fullName>International_Live_Text_Number__c</fullName>
+        <description>International Live Text Number</description>
+        <externalId>false</externalId>
+        <label>International Live Text Number</label>
+        <length>20</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>New_Custom_Objects_Tabs__c</fullName>
+        <deprecated>false</deprecated>
+        <description>Setting for custom objects feature</description>
+        <externalId>false</externalId>
+        <label>New_Custom_Objects_Tabs</label>
+        <length>32768</length>
+        <trackTrending>false</trackTrending>
+        <type>LongTextArea</type>
+        <visibleLines>2</visibleLines>
+    </fields>
+    <fields>
+        <fullName>New_Objects_Tabs__c</fullName>
+        <deprecated>false</deprecated>
+        <description>Contains objects for which new tabs will be opened</description>
+        <externalId>false</externalId>
+        <label>New_Objects_Tabs</label>
+        <length>32768</length>
+        <trackTrending>false</trackTrending>
+        <type>LongTextArea</type>
+        <visibleLines>2</visibleLines>
+    </fields>
+    <fields>
+        <fullName>No_Available_Users_Message__c</fullName>
+        <deprecated>false</deprecated>
+        <externalId>false</externalId>
+        <inlineHelpText>This message is sent automatically when an inbound customer text is received while no agents are available. (Not for use with Omni-Channel)</inlineHelpText>
+        <label>No Available Users Message</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>TextArea</type>
+    </fields>
+    <fields>
+        <fullName>Notify_Users_During_Off_Hours__c</fullName>
+        <defaultValue>true</defaultValue>
+        <deprecated>false</deprecated>
+        <externalId>false</externalId>
+        <inlineHelpText>When checked, new text sessions received during off hours will populate the user&apos;s (or agent&apos;s) notification queue.</inlineHelpText>
+        <label>Notify Users during off hours?</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Number__c</fullName>
+        <caseSensitive>false</caseSensitive>
+        <deprecated>false</deprecated>
+        <description>LiveText Number</description>
+        <externalId>false</externalId>
+        <inlineHelpText>The phone number / shortcode that has been verified and enabled for LiveText. To register additional phone numbers please contact LiveText support at http://support.hwlivetext.com</inlineHelpText>
+        <label>Support Number</label>
+        <length>18</length>
+        <required>true</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>true</unique>
+    </fields>
+    <fields>
+        <fullName>Offline_Hours_Message__c</fullName>
+        <deprecated>false</deprecated>
+        <description>This message is sent automatically when an inbound customer text is received during offline hours.</description>
+        <externalId>false</externalId>
+        <inlineHelpText>This message is sent automatically when an inbound customer text is received during offline hours.</inlineHelpText>
+        <label>Offline Hours Message</label>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>TextArea</type>
+    </fields>
+    <fields>
+        <fullName>Prepend_Country_Code__c</fullName>
+        <defaultValue>false</defaultValue>
+        <deprecated>false</deprecated>
+        <externalId>false</externalId>
+        <inlineHelpText>Whether or not to prepend country code for US and Canadian phone numbers that are auto-populated in new Account, Contact, and Lead records.</inlineHelpText>
+        <label>Prepend Country Code</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Screen_Pop_Default_Record_Type__c</fullName>
+        <deprecated>false</deprecated>
+        <description>Default new record type to pop for inbound conversations with no matching records.</description>
+        <externalId>false</externalId>
+        <label>Screen Pop Default Record Type</label>
+        <length>50</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Show_New_Account_Tab__c</fullName>
+        <defaultValue>false</defaultValue>
+        <deprecated>false</deprecated>
+        <externalId>false</externalId>
+        <inlineHelpText>Whether or not to show the New Account tab when a text session is started for this phone number.</inlineHelpText>
+        <label>Show New Account</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Show_New_Case_Tab__c</fullName>
+        <defaultValue>false</defaultValue>
+        <deprecated>false</deprecated>
+        <externalId>false</externalId>
+        <inlineHelpText>Whether or not to show the New Case tab when a text session is started for this phone number.</inlineHelpText>
+        <label>Show New Case</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Show_New_Contact_Tab__c</fullName>
+        <defaultValue>false</defaultValue>
+        <deprecated>false</deprecated>
+        <externalId>false</externalId>
+        <inlineHelpText>Whether or not to show the New Contact tab when a text session is started for this phone number.</inlineHelpText>
+        <label>Show New Contact</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Show_New_Lead_Tab__c</fullName>
+        <defaultValue>false</defaultValue>
+        <deprecated>false</deprecated>
+        <externalId>false</externalId>
+        <inlineHelpText>Whether or not to show the New Lead tab when a text session is started for this phone number.</inlineHelpText>
+        <label>Show New Lead</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Show_New_Opportunity_Tab__c</fullName>
+        <defaultValue>false</defaultValue>
+        <deprecated>false</deprecated>
+        <externalId>false</externalId>
+        <inlineHelpText>Whether or not to show the New Opportunity tab when a text session is started for this phone number.</inlineHelpText>
+        <label>Show New Opportunity</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Text_Session_Reuse_Time_seconds__c</fullName>
+        <defaultValue>0</defaultValue>
+        <deprecated>false</deprecated>
+        <externalId>false</externalId>
+        <inlineHelpText>The time between when a text session is ended and a new text message is received that an existing text session should be reused.</inlineHelpText>
+        <label>Text Session Reuse Time (seconds)</label>
+        <precision>6</precision>
+        <required>false</required>
+        <scale>0</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Validated__c</fullName>
+        <defaultValue>false</defaultValue>
+        <deprecated>false</deprecated>
+        <externalId>false</externalId>
+        <inlineHelpText>A number must be verified by HeyWire Business before it is enabled for LiveText. To register additional phone numbers please contact LiveText support at http://support.hwlivetext.com</inlineHelpText>
+        <label>Validated</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <label>LiveText Number</label>
+    <nameField>
+        <label>Phone Label</label>
+        <type>Text</type>
+    </nameField>
+    <pluralLabel>LiveText Numbers</pluralLabel>
+    <searchLayouts/>
+    <sharingModel>ReadWrite</sharingModel>
+    <validationRules>
+        <fullName>Chat_End_Message_Length_Rule</fullName>
+        <active>true</active>
+        <errorConditionFormula>LEN(Chat_End_Message__c)&gt;160</errorConditionFormula>
+        <errorDisplayField>Chat_End_Message__c</errorDisplayField>
+        <errorMessage>Chat End Message should not have more than 160 characters.</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>Initial_Message_Length_Rule</fullName>
+        <active>true</active>
+        <errorConditionFormula>LEN( Initial_Message__c) &gt; 160</errorConditionFormula>
+        <errorDisplayField>Initial_Message__c</errorDisplayField>
+        <errorMessage>Initial Message should not have more than 160 characters.</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>Offline_Hours_Message_Length_Rule</fullName>
+        <active>true</active>
+        <errorConditionFormula>LEN( Offline_Hours_Message__c) &gt; 160</errorConditionFormula>
+        <errorDisplayField>Offline_Hours_Message__c</errorDisplayField>
+        <errorMessage>Offline hours message should not have more than 160 characters.</errorMessage>
+    </validationRules>
+</CustomObject>

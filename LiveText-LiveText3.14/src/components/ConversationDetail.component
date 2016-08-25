@@ -1,0 +1,388 @@
+<apex:component controller="ConversationDetailController" allowDML="true">
+<apex:includeScript value="{!URLFOR($Resource.LiveText, 'js/conversationdetail.js')}"/>
+<script type="text/javascript">
+    var pID;
+    var selectedRowId;
+    var selectedRowName;
+    var link_tooltip = 'CLICK here to link this record';
+    var unlink_tooltip = 'CLICK here to unlink this record';
+    var conversationObj;
+    var fldId = 'Id';
+    var tempIconUrlHolder = null; //This variable holds url for custom object icon
+    var linkedRecrodsMap = new Map(); //prefix -> id
+    var canBlockChatCheckxobes = false;
+
+    function linkRecord(htmlObject){
+        var oPrefix = j$(htmlObject).attr('objectprefix');
+        var oId = j$(htmlObject).attr('objectid');
+        var oType = j$(htmlObject).attr('objecttype');
+        var oName = j$(htmlObject).attr('objectlinkname');
+        var oLinked = j$(htmlObject).attr('linked');
+        var oPluralLabel = j$(htmlObject).attr('objectplurallabel');
+        var oCurrentConversationRecordId =j$(htmlObject).attr('currentConversationRecordId');
+
+        if(typeof oLinked === 'undefined'){
+            oLinked = false;
+            if(j$('[objectid="'+oId+'"').prop('checked')){
+              oLinked = true;
+              j$('[objectType='+oType+']').not('[objectid="'+oId+'"]').prop('checked', false);
+            }
+        }else{
+            if(oLinked){
+                j$('[objectid="'+oId+'"]').prop('checked', true); 
+                j$('[objectType='+oType+']').not('[objectid="'+oId+'"]').prop('checked', false);
+            }else{
+              j$('[objectid="'+oId+'"]').prop('checked', false);
+            }
+        }
+
+        Visualforce.remoting.Manager.invokeAction(
+          '{!$RemoteAction.ConversationDetailController.associateSelectedRecords}',
+          oCurrentConversationRecordId,
+          oPrefix,
+          oId,
+          oLinked,
+          function(result, event)
+          {
+
+          }
+        );   
+        
+        var msg = {
+          'objectprefix':oPrefix
+          ,'objectid':oId
+          ,'objecttype':oType
+          ,'objectlinkname':oName
+          ,'linked':oLinked
+          ,'objectplurallabel':oPluralLabel
+        };
+
+        sforce.console.getEnclosingPrimaryTabId(function(result){
+              msg['currentPrimaryTabID'] = result.id;//currentPrimaryTabID
+              sforce.console.fireEvent( 'recordLinkedFromDetailJS', JSON.stringify(msg), function(){} );
+        });
+    }
+  
+    var SuccessIcon = function(result){
+        //Report whether we succeeded in opening the subtab
+        if(result.success == true) {
+            if(tempIconUrlHolder != null){
+                sforce.console.setTabIcon(tempIconUrlHolder,result.id);
+                tempIconUrlHolder = null;
+            }else{
+              //Failed to open subtab, probably because it is already open
+            }
+        }
+    };
+      
+    var openSubtab= function(result) {
+        //set the primary tabid, this is needed to open the subtab
+        pID = result.id;
+        //open the subtab with the right record ID and name set as its title
+        sforce.console.openSubtab(pID, '/'+selectedRowId, true,selectedRowName, null, SuccessIcon);
+     
+    };
+         
+    /* This function is to change the background color of the screenpop to white and 
+     * this is invoked when user clicks on the showAllTranscripts Link below the Screen
+     * pop table.
+    */
+    function unHighlightRows(){
+        var tableRows = j$('[id$="cd_associatedRecDetail"] tbody tr');
+        j$(tableRows).css('background-color', 'white');
+    }
+
+    function OpenSubtabFromLinkedRowItem(elem,name,iconUrl) {
+        //Get the right row ID and name
+        tempIconUrlHolder = iconUrl == 'customObject' ? "{!URLFOR($Resource.LiveText,'images/LTicon16.png')}" : iconUrl;
+         selectedRowId = elem;
+         selectedRowName = name ;
+         //add set icon function
+         //open subtab after retrieving the right primarytabID
+         sforce.console.getEnclosingPrimaryTabId(openSubtab); 
+     }
+
+    function linkFromTable(objectPrefix,recordId,onlyCheckboxUpdate){
+        onlyCheckboxUpdate = onlyCheckboxUpdate === 'undefined' ? false : onlyCheckboxUpdate;
+        var previouslyLinkedRecord = linkedRecrodsMap.get(objectPrefix);
+        var isLinked;
+        if(previouslyLinkedRecord){
+             //record of this object type is linked
+            j$('[objectId="'+previouslyLinkedRecord+ '"]').attr('title',link_tooltip);
+            if(previouslyLinkedRecord == recordId){
+                //unlinking
+                linkedRecrodsMap.put(recordId.substring(0, 3), null);
+                isLinked = false;
+            }else{
+                //linking other record
+                j$('[objectId="'+recordId+ '"]').attr('title',unlink_tooltip);
+                linkedRecrodsMap.put(recordId.substring(0, 3), recordId);
+                isLinked = true;
+            }
+        }else{
+            //record of this object type is not linked
+            j$('[objectId="'+recordId+ '"]').attr('title',unlink_tooltip);
+            linkedRecrodsMap.put(recordId.substring(0, 3), recordId);
+            isLinked = true;
+        }
+        if(!onlyCheckboxUpdate)
+            linkRecords(objectPrefix, recordId, isLinked);
+    }
+     
+    function getParameterByName(name, search) {
+        name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
+        var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
+        results = regex.exec(search);
+        var ret = results === null ? null : decodeURIComponent(results[1].replace(/\+/g, " "));
+        return (ret === 'null') ? null : ret;
+    }
+
+    function getSafeParameterByName(name, search) {
+        var val = getParameterByName(name, search);
+        return (val == null || val == 'null') ? "" : val;
+    }
+     
+    function getConversationHeaderList(){
+       return j$('[id$=hiddenconvheaderlist]').text();
+    }
+    
+    function getAssociatedObjects(){
+       return j$('[id$=hiddenassociatedobjects]').text();
+    }
+   
+    function onConversationInitialized(){
+     	var associatedObjects = getAssociatedObjects();
+        if(associatedObjects){
+        	sforce.console.getEnclosingPrimaryTabId(function(result){
+       			var msg = {
+	          		'records':associatedObjects
+	          		,'currentPrimaryTabID':result.id
+	        	};
+             	sforce.console.fireEvent( 'associatedObjectsLoaded', JSON.stringify(msg), function(){} );
+        	});
+       	}
+    }
+
+    function refreshLinkRecordsTable(){
+        var conversationObj = getConversationHeaderList();
+        if(conversationObj){
+            var records = JSON.parse(conversationObj);
+            if (records) {
+                for (var i = 0; i < records.length; i++) {
+                    for(var item in records[i]){
+                        if(typeof records[i][item] == 'object'){
+                            if(typeof records[i][item][fldId] !== 'undefined'){
+                                linkedRecrodsMap.put(records[i][item][fldId].substring(0, 3), records[i][item][fldId]);
+                                j$('[objectId$="'+records[i][item][fldId] + '"]').prop('checked', true);
+                                j$('[objectid$="'+records[i][item][fldId]+'"]').attr('title',unlink_tooltip);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    function checkResult(result) { 
+        if(result.success){
+            //'Tab icon set successfully!'
+        }else{
+            //'Tab icon not set!'
+        }
+    }    
+
+    //Sets the primary tab icon
+    var setIcon= function setIcon(result) {
+        pID = result.id;
+        sforce.console.setTabIcon('{!URLFOR($Resource.LiveText,'images/LTicon16.png')}',pID,checkResult);
+    }; 
+
+    sforce.console.getEnclosingPrimaryTabId(setIcon);
+       
+    function getPrimaryTabDetails(callback){
+        sforce.console.getEnclosingPrimaryTabId(function(result) {
+            sforce.console.getSubtabIds(result.id , function(result){
+                var firstSubTabId = result.ids[0];
+                sforce.console.getPageInfo(firstSubTabId , function(result){
+                    primaryTabId = result.id;
+                    var resultObj =  JSON.parse(result.pageInfo);
+                    callback(resultObj);
+                });
+            });
+        });
+    }
+
+    //Disable linking
+    function blockLinking(){
+        j$("[id$='linkOutput']").prop('disabled', true);
+    }
+
+    function unblockLinking(){
+        j$("[id$='linkOutput']").prop('checked', false);
+        linkedRecrodsMap.each(function(key){ 
+            var value = linkedRecrodsMap.get(key);
+            if(value != null){
+               j$('[objectId$="'+value+ '"]').prop('checked', true);
+                j$('[objectid$="'+value+'"]').attr('title',unlink_tooltip);
+            }
+        });
+        j$("[id$='linkOutput']").prop('disabled', false);
+        canBlockChatCheckxobes = true;
+    }
+
+            
+    j$(document).ready(function() {
+      sforce.console.addEventListener('recordLinkedFromChat', function(result){
+          var messageObj = j$.parseJSON(result.message);
+              var tempTabId = messageObj['currentPrimaryTabID'];
+              sforce.console.getEnclosingPrimaryTabId(function(result){
+                  if(tempTabId == result.id){ //This check is required otherwise all the primary tabs opened will fire this event.
+                      linkRecord(messageObj);
+                  }
+              });
+      });      
+
+      sforce.console.addEventListener('RefreshLinkRecordsTableEvent',function(result){
+          var messageObj = JSON.parse(result.message);
+          var tempTabId = messageObj['currentPrimaryTabID'];
+          sforce.console.getEnclosingPrimaryTabId(function(result){
+              if(tempTabId == result.id){ //This check is required otherwise all the primary tabs opened will fire this event.
+                  getCurrentConversationHeaderList();
+              }
+          });
+      })
+
+      conversationInitialization = new Object();
+      getPrimaryTabDetails(function(resultObj) {
+          var pageUrl = resultObj.url;
+          conversationTypeParam = getSafeParameterByName('conversationtype', pageUrl);                    
+          objectIdParam = getSafeParameterByName('oid', pageUrl);                   
+          initConversation(conversationTypeParam,objectIdParam);
+      });  
+  });
+
+</script>
+  <apex:attribute name="convHeaderId"
+    description="Parent Conversation Header Object's Id" type="String"
+    required="true" assignTo="{!conversationHeaderId}" />
+  <apex:attribute name="oid"
+    description="Id of object that invoked the console in reference to the Send Text Message button" type="String"
+    required="true" assignTo="{!originatingObjectId}" />
+  <apex:attribute name="objectprefix"
+    description="Id of object that invoked the console in reference to the Send Text Message button" type="String"
+    required="true" assignTo="{!originatingObjectPrefix}" />
+  <apex:form >
+    <apex:actionFunction action="{!loadSelectedRowTrasncripts}"
+        name="loadTranscriptJS" reRender="cd_previousTranscripts , showAllTranscriptsDiv">
+        <apex:param name="recordId" assignTo="{!selectedRecId}" value="" />
+    </apex:actionFunction>
+    <!--Added as part of LT-685 to load all the transcripts for all the objects displayed on the screenpopup table. -->
+    <apex:actionFunction action="{!loadAllTranscripts}"
+        name="loadAllTranscriptJS" reRender="cd_previousTranscripts,showAllTranscriptsDiv">
+    </apex:actionFunction>
+    <apex:pageBlock id="pblock"> 
+    <div id="InternalDiv">
+      <apex:pageMessages />
+      <apex:pageblockTable value="{!associatedRecordList}"
+        var="associatedRec" id="cd_associatedRecDetail" rules="rows"
+        onRowClick="highlightRow(this);" style="cursor: pointer;line-height: 30px;" >
+        <apex:column headerValue="Record Id" headerClass="hidden"
+          styleclass="hidden">
+        <apex:outputText value="{!associatedRec.recordId}" />
+        </apex:column>
+        <apex:column headerValue="{!$Label.RecordTypeLbl}" style="min-width:108px;">
+              <apex:outputPanel >
+            	<img src="{!IF(associatedRec.iconUrl == 'customObject', URLFOR($Resource.LiveText,'images/LTicon16.png'), associatedRec.iconUrl)}" title="{!associatedRec.recordType}" style="display:inline-block;margin-right:8px;margin-left:2px;" ></img>             
+               </apex:outputPanel>        
+          <apex:outputText value="{!associatedRec.recordType}" />
+        </apex:column>
+        <apex:column headerValue="{!$Label.RecordNameLbl}">
+                <apex:outputPanel rendered="{!IF(associatedRec.nameClickable,true,false)}">
+            <apex:outputLink value="#" onClick="OpenSubtabFromLinkedRowItem('{!associatedRec.recordId}','{!JSENCODE(associatedRec.name)}', '{!associatedRec.iconUrl}');">{!associatedRec.name}</apex:outputLink>
+                </apex:outputPanel>
+                <apex:outputPanel rendered="{!IF(associatedRec.nameClickable,false,true)}">
+                    <apex:outputText value="{!associatedRec.name}" ></apex:outputText>
+                </apex:outputPanel>
+            </apex:column>
+        <apex:column headerValue="{!$Label.RecordCaseNumberLbl}">
+              <apex:outputPanel rendered="{!IF(associatedRec.caseClickable,true,false)}">
+                <apex:outputLink value="#" onClick="OpenSubtabFromLinkedRowItem('{!associatedRec.recordId}','{!JSENCODE(associatedRec.caseNumber)}', null);">{!associatedRec.caseNumber}</apex:outputLink>
+              </apex:outputPanel>
+              <apex:outputPanel rendered="{!IF(associatedRec.caseClickable,false,true)}">
+                  <apex:outputText value="{!associatedRec.caseNumber}" ></apex:outputText>
+              </apex:outputPanel>
+            </apex:column>    
+        <apex:column headerValue="{!$Label.AccountNameLbl}">
+           <apex:outputPanel rendered="{!IF(associatedRec.objectPrefix=='001',true,false)}">
+            <apex:outputLink value="#" onClick="OpenSubtabFromLinkedRowItem('{!associatedRec.recordId}','{!JSENCODE(associatedRec.accountName)}', null);">{!associatedRec.accountName}</apex:outputLink>
+              </apex:outputPanel>
+              <apex:outputPanel rendered="{!IF(associatedRec.objectPrefix=='001',false,true)}">
+                  <apex:outputText value="{!associatedRec.accountName}" ></apex:outputText>
+              </apex:outputPanel>
+        </apex:column>
+        <apex:column headerValue="{!$Label.PhoneLbl}">
+          <apex:outputText value="{!associatedRec.phone}" />
+        </apex:column>
+        <apex:column headerValue="{!$Label.EmailLbl}">
+          <apex:outputText value="{!associatedRec.email}" />
+        </apex:column>
+        <apex:column headerValue="{!$Label.StatusLbl}">
+          <apex:outputText value="{!associatedRec.status}" />
+        </apex:column>
+        <apex:column headerValue="{!$Label.LastModifiedLbl}">
+          <apex:outputText value="{0,date,M/dd/yy h:mm a}" >
+            <apex:param value="{!associatedRec.lastModifiedDate}"/>
+          </apex:outputText>
+        </apex:column>
+
+        <apex:column headerValue="{!$Label.LinkLbl}" rendered="{!IF(conversationType=='inbound',true,false)}">
+          <apex:outputPanel rendered="{!IF(associatedRec.conversationType=='inbound',true,false)}">
+                  <apex:inputCheckbox styleClass="linkingRecords" 
+                    title="click here to link this record" 
+                    style="margin:10px;" 
+                    rendered="true" 
+                    html-objectid="{!associatedRec.recordId}" 
+                    html-objecttype="{!JSENCODE(associatedRec.objectType)}" 
+                    html-objectprefix="{!associatedRec.objectPrefix}" 
+                    html-objectlinkname="{!associatedRec.linkName}" 
+                    html-objectplurallabel="{!associatedRec.pluralLabel}"
+                    html-currentConversationRecordId="{!conversationHeaderId}"
+                    onClick="linkRecord(this)"/>
+                </apex:outputPanel>
+        </apex:column>        
+        
+      </apex:pageblockTable>      
+      <apex:outputPanel layout="block"  id="pageStatus" styleClass="pageStatus">
+        <table style="margin:0 auto;margin-top:0.5%;margin-bottom:0.5%">
+          <tr>
+            <td><img src="/img/loading32.gif" width="16" height="16" /></td><td><apex:outputLabel value="Loading..."  style="font-weight:500;color:#333;margin-left:5px;margin-top:5px;"/></td>
+          </tr>
+        </table>             
+          </apex:outputPanel>      
+            <apex:actionFunction name="initConversation" action="{!InitializeConversation}" rerender="dummy,cd_associatedRecDetail" onComplete="j$('.pageStatus').hide();refreshLinkRecordsTable();loadAllTranscriptJS();onConversationInitialized();return false;">
+       </apex:actionFunction>
+            <p style="margin-top:0.5%;margin-bottom:0.5%"></p>
+            <!-- The below panel is to display the showAll Transcripts Link and it displays only when user clicks on any particular record in the screenpop table. -->
+            <!-- If it is already showing the All transcripts for the records in the table, this link will disappear -->
+            <!-- showAlLink boolean variable controls when this link should appear and it is set to true/false appropriately in the methods loadAllTranscripts and loadTranscriptsMethod -->
+            <apex:outputPanel id="showAllTranscriptsDiv" >
+              <apex:outputPanel rendered="{!IF(showAllLink,true,false)}">
+                  <apex:outputLink value="#" onclick="loadAllTranscriptJS();unHighlightRows();" style="float:right">Click Here to show All Transcripts</apex:outputLink>
+                </apex:outputPanel>
+            </apex:outputPanel>
+            <p style="margin-top:0.5%;margin-bottom:0.5%"></p>
+      <apex:outputPanel id="cd_previousTranscripts">
+        <apex:outputPanel rendered="{!IF(selectedRecId != null, true, false)}"
+          id="transcriptSection">
+          <c:Transcript associatedRecId="{!selectedRecId}" transcriptHeader="{!transcriptHeader}"/>
+        </apex:outputPanel>
+      </apex:outputPanel>
+      <apex:actionFunction name="getCurrentConversationHeaderList" action="{!getCurrentConversationHeaderList}" oncomplete="refreshLinkRecordsTable();return false;" rerender="dummy" />
+      <apex:outputPanel id="dummy">
+        <apex:outputText id="hiddenconvheaderlist" value="{!ConversationHeaderRecords}"  styleClass="display_none" />
+        <apex:outputText id="hiddenassociatedobjects" value="{!AssociatedObjectsJSON}"  styleClass="display_none" />
+      </apex:outputPanel>
+      </div>
+    </apex:pageBlock>
+  </apex:form>
+</apex:component>

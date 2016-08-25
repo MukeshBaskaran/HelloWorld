@@ -1,0 +1,540 @@
+<apex:page standardController="Conversation_Session__c" extensions="LiveTextCampaignBulkSMSController" action="{!init}" >
+    <html xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+        <apex:stylesheet value="{!URLFOR($Resource.SLDS202, 'assets/styles/salesforce-lightning-design-system-vf.css')}" />
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8"></meta>
+        <apex:includeScript value="{!URLFOR($Resource.LiveText, '/jquery/jquery-1.10.2.js')}" />
+        <apex:includeScript value="{!URLFOR($Resource.LiveText, '/js/tooltip.js')}" />
+        <apex:includeScript value="/soap/ajax/31.0/connection.js"/>
+        <apex:includeScript value="/support/console/31.0/integration.js"/>
+        <apex:includeScript value="{!URLFOR($Resource.LiveText, '/js/livetextglobal.js')}" />
+        <script>
+             var j$ = jQuery.noConflict();
+         </script>
+        <style type="text/css">
+          #titleInfoPanel
+          {
+            margin-left: 10px;
+          }
+          #tooltipWrapper
+          {
+            position:fixed;
+          }
+          .btnStyle
+          {
+            background:#0070d2;
+            text-align: center;
+            color: white;
+            font-size: 0.75rem;
+            height: 35px;
+            padding-left: 1rem;
+            padding-right: 1rem;
+            text-align: center;
+            vertical-align: middle;
+            border: 1px solid #0070d2;
+            color: white;
+          };
+        </style>
+        <div class='live-text'>
+        <apex:form style="margin:15px;" >
+        <div class="slds-media slds-media--center" style="margin-bottom: 1.5rem;">
+            <div class="slds-media__figure">
+                <span class="slds-icon_container slds-icon-standard-campaign">
+                    <svg aria-hidden="true" class="slds-icon">
+                        <use xlink:href="{!URLFOR($Resource.SLDS202, 'assets/icons/standard-sprite/svg/symbols.svg#campaign')}"></use>
+                    </svg>
+                </span>
+            </div>
+            <div class="slds-media__body">
+                <p class="slds-page-header__title slds-truncate slds-align-middle" title="Send Text Messages(s)">{!$Label.BulkSendTextTitle}</p>
+                <p class="slds-text-body--small page-header__info">{!campaignName}</p>
+            </div>
+        </div>
+        <div id="informationPanel" class="slds-box" style="margin-bottom: 1.5rem;">
+            <span id="errorIcon" class="slds-icon_container" title="Error">
+                <svg aria-hidden="true" class="slds-icon slds-icon--middle" style="width: 2rem;height: 2rem;">
+                    <use xlink:href="{!URLFOR($Resource.SLDS202, '/assets/icons/utility-sprite/svg/symbols.svg#error')}"></use>
+                </svg>
+                <span class="slds-assistive-text">Error</span>
+            </span>
+            <span id="infoIcon" class="slds-icon_container" title="Info">
+                <svg aria-hidden="true" class="slds-icon slds-icon--middle" style="width: 2rem;height: 2rem;">
+                    <use xlink:href="{!URLFOR($Resource.SLDS202, '/assets/icons/utility-sprite/svg/symbols.svg#info')}"></use>
+                </svg>
+            </span>
+            <span id="warningIcon" class="slds-icon_container" title="Info">
+                <svg aria-hidden="true" class="slds-icon slds-icon--middle" style="width: 2rem;height: 2rem;">
+                    <use xlink:href="{!URLFOR($Resource.SLDS202, '/assets/icons/utility-sprite/svg/symbols.svg#warning')}"></use>
+                </svg>
+            </span>
+            <span id="successIcon" class="slds-icon_container" title="Info">
+                <svg aria-hidden="true" class="slds-icon slds-icon--middle" style="width: 2rem;height: 2rem;">
+                    <use xlink:href="{!URLFOR($Resource.SLDS202, '/assets/icons/utility-sprite/svg/symbols.svg#success')}"></use>
+                </svg>
+            </span>
+            <span id="titleInfoPanel"></span>
+        </div>
+        <div class="slds-spinner_container" id="spinner">
+            <div class="slds-spinner--brand slds-spinner slds-spinner--large" aria-hidden="false" role="alert">
+                <div class="slds-spinner__dot-a"></div>
+                <div class="slds-spinner__dot-b"></div>
+            </div>
+        </div>
+        <div class="slds-form--horizontal" id="insertDataPage">
+            <div class="slds-form-element" style="margin:10px;width: 60%;">
+                <label class="slds-form-element__label" for="numberSelect" style="font-size: 0.8rem;">{!$Label.BulkCampaignPhoneTitle}
+                    <span id="phoneTooltipIcon" class="slds-icon_container" title="{!$Label.BulkCampaignPhoneNumberTooltip}">
+                        <svg aria-hidden="true" class="slds-icon slds-icon-text-default slds-icon--x-small" style="height: 0.8rem;">
+                            <use xlink:href="{!URLFOR($Resource.SLDS202, '/assets/icons/utility-sprite/svg/symbols.svg#info')}"></use>
+                        </svg>
+                    </span>
+                </label>
+                <div class="slds-form-element__control">
+                    <div class="slds-select_container">
+                        <select id="numberSelect" class="slds-select">
+                                <option value="notValid">{!$Label.BulkCampaignPhoneSelectDefault}</option>
+                            <apex:repeat value="{!numbers}" var="number">
+                                <option value="{!number.value}">{!number.label}</option>
+                            </apex:repeat>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="slds-form-element" style="margin:10px;width: 60%;">
+                <label class="slds-form-element__label" for="messageTextArea" style="font-size: 0.8rem;">{!$Label.BulkTextBodyTitle}
+                    <span id="textAreaTooltipIcon" class="slds-icon_container" title="{!$Label.BulkCampaignTextBodyTooltip}">
+                        <svg aria-hidden="true" class="slds-icon slds-icon-text-default slds-icon--x-small" style="height: 0.8rem;">
+                            <use xlink:href="{!URLFOR($Resource.SLDS202, '/assets/icons/utility-sprite/svg/symbols.svg#info')}"></use>
+                        </svg>
+                    </span>
+                </label>
+                <div class="slds-form-element__control">
+                    <textarea id="messageTextArea" class="slds-textarea" placeholder="{!$Label.ActiveChatSendMsgPlaceholderLbl}" onkeyup="updateCharacters();"></textarea>
+                </div>
+            </div>
+            <div class="slds-form-element">
+                <div class="slds-form-element__control">
+                    <div class="slds-text-align--right" style="margin-right:10px;width: 41%;">
+                        <b>
+                            <div class="spn" id="characters" style="margin-right:0px;padding-top:5px;font-family:Salesforce Sans,Arial,​sans-serif;font-size:10px;float:left;
+                                width:95%;" >0</div>
+                            <div style="margin-right:0px;padding-top:5px;font-family:Salesforce Sans,Arial,​sans-serif;font-size:10px;float:left;width:5%;" class="spn1"    id="numberOfMessages" >(0)</div>
+                        </b>
+                    </div>
+                </div>
+            </div>
+            <fieldset class="slds-form-element is-required" style="margin:10px;width: 60%;">
+                <label class="slds-form-element__legend slds-form-element__label" style="font-size: 0.8rem;">{!$Label.BulkCampaignFilterByStatusTitle}
+                    <span id="statusTooltipIcon" class="slds-icon_container" title="{!$Label.BulkCampaignFilterByStatusTooltip}">
+                        <svg aria-hidden="true" class="slds-icon slds-icon-text-default slds-icon--x-small" style="height: 0.8rem;">
+                            <use xlink:href="{!URLFOR($Resource.SLDS202, '/assets/icons/utility-sprite/svg/symbols.svg#info')}"></use>
+                        </svg>
+                    </span>
+                </label>
+                <div class="slds-form-element__control" id="checkboxes">
+                    <apex:repeat value="{!campaignAvailableStatuses}" var="status">
+                        <label class="slds-checkbox" for="{!status.value}_statusCheckbox" style="font-size: 0.8rem;">
+                            <input name="default" type="checkbox" id="{!status.value}_statusCheckbox" value="{!status.value}" />
+                            <span class="slds-checkbox--faux"></span>
+                            <span class="slds-form-element__label">{!status.label}</span>
+                        </label>
+                    </apex:repeat>
+                </div>
+            </fieldset>
+            <div class="slds-form-element" style="margin:10px;width: 60%;">
+                <label class="slds-form-element__label" for="afterSendStatus" style="font-size: 0.8rem;">{!$Label.BulkCampaignStatusAfterSendTitle}
+                    <span id="statusAfterSendTooltipIcon" class="slds-icon_container" title="{!$Label.BulkCampaignAfterSendStatusTooltip}">
+                        <svg aria-hidden="true" class="slds-icon slds-icon-text-default slds-icon--x-small" style="height: 0.8rem;">
+                            <use xlink:href="{!URLFOR($Resource.SLDS202, '/assets/icons/utility-sprite/svg/symbols.svg#info')}"></use>
+                        </svg>
+                    </span>
+                </label>
+                <div class="slds-form-element__control">
+                    <div class="slds-select_container">
+                        <select id="afterSendStatus" class="slds-select">
+                            <option value="doNotChange">{!$Label.BulkCampaignDoNotChangeStatus}</option>
+                            <apex:repeat value="{!campaignAvailableStatuses}" var="status">
+                                <option value="{!status.value}">{!status.label}</option>
+                            </apex:repeat>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="slds-form-element" style="margin:10px;width: 60%;">
+                <label class="slds-form-element__label" for="duplicatesStatus" style="font-size: 0.8rem;">{!$Label.BulkCampaignDuplicateStatusTitle}
+                    <span id="duplicatesStatusTooltipIcon" class="slds-icon_container" title="{!$Label.BulkCampaignDuplicateStatusTooltip}">
+                        <svg aria-hidden="true" class="slds-icon slds-icon-text-default slds-icon--x-small" style="height: 0.8rem;">
+                            <use xlink:href="{!URLFOR($Resource.SLDS202, '/assets/icons/utility-sprite/svg/symbols.svg#info')}"></use>
+                        </svg>
+                    </span>
+                </label>
+                <div class="slds-form-element__control">
+                    <div class="slds-select_container">
+                        <select id="duplicatesStatus" class="slds-select">
+                            <option value="doNotChange">{!$Label.BulkCampaignDoNotChangeStatus}</option>
+                            <apex:repeat value="{!campaignAvailableStatuses}" var="status">
+                                <option value="{!status.value}">{!status.label}</option>
+                            </apex:repeat>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="slds-form-element" style="margin:10px;width: 60%;">
+                <label class="slds-form-element__label" for="afterResponseStatus" style="font-size: 0.8rem;">{!$Label.BulkCampaignStatusAfterResponseTitle}
+                    <span id="statusAfterResponseTooltipIcon" class="slds-icon_container" title="{!$Label.BulkCampaignAfterResponseStatusTooltip}">
+                        <svg aria-hidden="true" class="slds-icon slds-icon-text-default slds-icon--x-small" style="height: 0.8rem;">
+                            <use xlink:href="{!URLFOR($Resource.SLDS202, '/assets/icons/utility-sprite/svg/symbols.svg#info')}"></use>
+                        </svg>
+                    </span>
+                </label>
+                <div class="slds-form-element__control">
+                    <div class="slds-select_container">
+                        <select id="afterResponseStatus" class="slds-select">
+                            <option value="doNotChange">{!$Label.BulkCampaignDoNotChangeStatus}</option>
+                            <apex:repeat value="{!campaignRespondedStatuses}" var="status">
+                                <option value="{!status.value}">{!status.label}</option>
+                            </apex:repeat>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="slds-form-element" style="margin:10px;width: 60%;">
+                <label class="slds-form-element__label" for="afterOptOutStatus" style="font-size: 0.8rem;">{!$Label.BulkCampaignStatusAfterOptOutTitle}
+                    <span id="statusAfterOptoutTooltipIcon" class="slds-icon_container" title="{!$Label.BulkCampaignAfterOptOutStatusTooltip}">
+                        <svg aria-hidden="true" class="slds-icon slds-icon-text-default slds-icon--x-small" style="height: 0.8rem;">
+                            <use xlink:href="{!URLFOR($Resource.SLDS202, '/assets/icons/utility-sprite/svg/symbols.svg#info')}"></use>
+                        </svg>
+                    </span>
+                </label>
+                <div class="slds-form-element__control">
+                    <div class="slds-select_container">
+                        <select id="afterOptOutStatus" class="slds-select">
+                            <option value="doNotChange">{!$Label.BulkCampaignDoNotChangeStatus}</option>
+                            <apex:repeat value="{!campaignAvailableStatuses}" var="status">
+                                <option value="{!status.value}">{!status.label}</option>
+                            </apex:repeat>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="slds-align--absolute-center" style="margin:15px;width: 75%;">
+                <div class="slds-form-element">
+                    <button onclick="validateData();" type="button" class="slds-button slds-button--brand">{!$Label.BulkSendTextButton}</button>
+                    <button onclick="cancelInit();" type="button" class="slds-button slds-button--brand">{!$Label.BulkCancelButton}</button>
+                </div>
+            </div>
+        </div>
+        <div class="slds-form--horizontal" id="confirmationPage">
+            <div class="slds-align--absolute-center" style="margin:15px; width: 75%;">
+                <div class="slds-form-element">
+                    <button onclick="sendSMS();" type="button" style="background:#0070d2; text-align: center; color: white;font-size: 0.75rem;height: 30px;padding-left: 1rem;padding-right: 1rem;text-align: center; vertical-align: middle;border: 1px solid #0070d2;color: white;">{!$Label.BulkConfirmSendingButton}</button>
+                    <button onclick="back();" type="button" style="background:#0070d2; text-align: center; color: white;font-size: 0.75rem;height: 30px;padding-left: 1rem;padding-right: 1rem;text-align: center; vertical-align: middle;border: 1px solid #0070d2;color: white;">{!$Label.BulkBackButton}</button>
+                </div>
+            </div>
+        </div>
+        <div class="slds-form--horizontal" id="donePage" style="width: 75%;">
+            <div class="slds-align--absolute-center" style="margin:15px;">
+                <div class="slds-form-element">
+                    <button onclick="done();" type="button" class="slds-button slds-button--brand">{!$Label.BulkDoneButton}</button>
+                </div>
+            </div>
+        </div>
+        <div id="tooltipWrapper"></div>
+        </apex:form>
+      </div>
+        <script type="text/javascript">
+            var storageId = '{!storageId}';
+            var campaignId ='{!campaignId}';
+            var numberOfCampaignMembers = 0;
+            var isAllProcessDone = false;
+            var recLimit;
+            sforce.connection.sessionId = '{!$Api.Session_ID}';
+
+            j$('#donePage').hide();
+            j$('#confirmationPage').hide();
+
+            var closeSubtab = function closeSubtab(result) {
+                var tabId = result.id;
+                sforce.console.closeTab(tabId);
+            };
+
+            function showInfoPanel(titleMessage, theme){
+                j$('#titleInfoPanel').text(titleMessage);
+                if(theme === 'error'){
+                    j$('#informationPanel').removeClass('slds-theme--info').removeClass('slds-theme--warning').removeClass('slds-theme--success').addClass('slds-theme--error');
+                    j$('#infoIcon').hide();
+                    j$('#warningIcon').hide();
+                    j$('#successIcon').hide();
+                    j$('#errorIcon').show();
+                }else if(theme === 'info'){
+                    j$('#informationPanel').removeClass('slds-theme--error').removeClass('slds-theme--warning').removeClass('slds-theme--success').addClass('slds-theme--info');
+                    j$('#errorIcon').hide();
+                    j$('#warningIcon').hide();
+                    j$('#successIcon').hide();
+                    j$('#infoIcon').show();
+                }else if(theme === 'warning'){
+                    j$('#informationPanel').removeClass('slds-theme--error').removeClass('slds-theme--info').removeClass('slds-theme--success').addClass('slds-theme--warning');
+                    j$('#errorIcon').hide();
+                    j$('#infoIcon').hide();
+                    j$('#successIcon').hide();
+                    j$('#warningIcon').show();
+                }else if(theme === 'success'){
+                    j$('#informationPanel').removeClass('slds-theme--error').removeClass('slds-theme--warning').removeClass('slds-theme--info').addClass('slds-theme--success');
+                    j$('#errorIcon').hide();
+                    j$('#infoIcon').hide();
+                    j$('#warningIcon').hide();
+                    j$('#successIcon').show();
+                }
+                j$('#informationPanel').show();
+            }
+            function hideInfoPanel(){
+                j$('#informationPanel').hide();
+            }
+            hideInfoPanel();
+
+            function showSpinner(){
+                j$('#spinner').show();
+            }
+            function hideSpinner(){
+                j$('#spinner').hide();
+            }
+            hideSpinner();
+
+            function getStatusesToSendTo(){
+                var selected = [];
+                j$('#checkboxes input:checked').each(function() {
+                    selected.push(j$(this).attr('value'));
+                });
+                return selected;
+            }
+
+            function cancelInit() {
+                var retVal = confirm('{!$Label.BulkCampaignCancel}');
+                if( retVal == true ){
+                    deleteStorage(function(){
+                        if(sforce.console.isInConsole()) {
+                            sforce.console.setTabUnsavedChanges(false);
+                            window.removeEventListener('beforeunload', onBeforeunLoadHanlder, false);
+                            sforce.console.getEnclosingTabId(closeSubtab);
+                        } else{
+                            sforce.console.setTabUnsavedChanges(false);
+                            window.removeEventListener('beforeunload', onBeforeunLoadHanlder, false);
+                            window.history.back();
+                        }
+                    });
+                    return true;
+                }else{
+                    return false;
+                }
+            }
+
+            function deleteStorage(callback){
+                Visualforce.remoting.Manager.invokeAction(
+                        '{!$RemoteAction.LiveTextCampaignBulkSMSController.deleteStorageRecord}',
+                                storageId,
+                                callback);
+            }
+
+            function validateData(){
+                showSpinner();
+                if(j$('#numberSelect').val() == "notValid"){
+                    showInfoPanel('{!$Label.BulkCampaignPhoneSelectDefaultError}', 'error');
+                    hideSpinner();
+                }else{
+                    Visualforce.remoting.Manager.invokeAction(
+                        '{!$RemoteAction.LiveTextCampaignBulkSMSController.getCampaignRecordLimitForPhone}',
+                                j$('#numberSelect').val(),
+                                function(result){
+                                    recLimit = result;
+                                    if(recLimit == 0){
+                                        showInfoPanel('{!$Label.BulkNoPhoneAssignedError}','error');
+                                        hideSpinner();
+                                    }else if(j$('#messageTextArea').val().length == 0) {
+                                        showInfoPanel('{!$Label.BulkNoSendTextError}', 'error');
+                                        hideSpinner();
+                                    }else if(getStatusesToSendTo().length === false || getStatusesToSendTo().length == 0) {
+                                        showInfoPanel('{!$Label.BulkCampaignNoStatusError}', 'error');
+                                        hideSpinner();
+                                    }else {
+                                         Visualforce.remoting.Manager.invokeAction(
+                                        '{!$RemoteAction.LiveTextCampaignBulkSMSController.countCampaignMembers}',
+                                                    campaignId,
+                                                    getStatusesToSendTo(),
+                                                    function(result){
+                                                        numberOfCampaignMembers = result;
+                                                        var canSend = recLimit >= numberOfCampaignMembers;
+                                                        if(numberOfCampaignMembers == 0){
+                                                            showInfoPanel('{!$Label.BulkCampaignZeroMembersError}', 'error');
+                                                        }else if(recLimit == {!CampaignShortcodeRecordLimit} && canSend === false) {
+                                                            showInfoPanel('{!$Label.BulkCampaignRecordLimitPrefixError} ' + recLimit + ' {!$Label.BulkCampaignRecordLimitSuffixError}', 'error');
+                                                        }else if (recLimit == {!LongcodeRecordLimit} && canSend === false) {
+                                                            showInfoPanel('{!$Label.BulkCampaignRecordLimitPrefixError} ' + recLimit + ' {!$Label.BulkCampaignRecordLimitLongcodeSuffixError}', 'error');
+                                                        }else {
+                                                            j$('#insertDataPage').hide();
+                                                            j$('#donePage').hide();
+                                                            j$('#confirmationPage').show();
+                                                            if(numberOfCampaignMembers == 1){
+                                                                showInfoPanel(numberOfCampaignMembers +' {!$Label.BulkRecipientSelectedSuffix}','info');
+                                                            }else{
+                                                                showInfoPanel(numberOfCampaignMembers +' {!$Label.BulkRecipientsSelectedSuffix}', 'info');
+                                                            }
+                                                        }
+                                                        hideSpinner();
+                                                    });
+                                    }
+                                }
+                            );
+                }
+            }
+
+            function back(){
+                j$('#insertDataPage').show();
+                j$('#donePage').hide();
+                j$('#confirmationPage').hide();
+                hideInfoPanel();
+            }
+
+            function sendSMS(){
+                showSpinner();
+                Visualforce.remoting.Manager.invokeAction(
+                    '{!$RemoteAction.LiveTextCampaignBulkSMSController.countCampaignMembers}',
+                    campaignId,
+                    getStatusesToSendTo(),
+                    function(result){
+                        var actualNumberOfCampaignMembers = result;
+                        var canSend = recLimit >= actualNumberOfCampaignMembers;
+                        if(!canSend){
+                            showInfoPanel('{!$Label.BulkCampaignNumberOfRecipientsChanged} ' + numberOfCampaignMembers + ' to: ' + actualNumberOfCampaignMembers + '. This number can be used to send only ' + recLimit + ', please select fewer campaign members.', 'error');
+                            hideSpinner();
+                        }else if(actualNumberOfCampaignMembers !== numberOfCampaignMembers) {
+                            showInfoPanel('{!$Label.BulkCampaignNumberOfRecipientsChanged} ' + numberOfCampaignMembers + ' to: ' + actualNumberOfCampaignMembers + '. If you want to continue please confirm.', 'warning');
+                            numberOfCampaignMembers = actualNumberOfCampaignMembers;
+                            hideSpinner();
+                        }else {
+                            Visualforce.remoting.Manager.invokeAction('{!$RemoteAction.LiveTextCampaignBulkSMSController.getInprogressOutBoundBatchCount}',
+                                function(result){
+                                    if(result > 0){
+                                        showInfoPanel('{!$Label.BulkCampaignBatchLockError}', 'error');
+                                        hideSpinner();
+                                    }
+                                    else{
+                                        Visualforce.remoting.Manager.invokeAction(
+                                            '{!$RemoteAction.LiveTextCampaignBulkSMSController.sendSMSToCampaignMembers}',
+                                            j$('#numberSelect').val(),
+                                            j$('#messageTextArea').val(),
+                                            campaignId,
+                                            getStatusesToSendTo(),
+                                            j$('#afterSendStatus').val(),
+                                            j$('#duplicatesStatus').val(),
+                                            j$('#afterResponseStatus').val(),
+                                            j$('#afterOptOutStatus').val(),
+                                            storageId,
+                                            function(){}
+                                        );
+                                        deleteStorage(function(){
+                                            j$('#insertDataPage').hide();
+                                            j$('#confirmationPage').hide();
+                                            j$('#donePage').show();
+                                            isAllProcessDone = true;
+                                            hideSpinner();
+                                            showInfoPanel('{!$Label.BulkCongrats}', 'success');
+                                            sforce.console.setTabUnsavedChanges(false);
+                                            window.removeEventListener('beforeunload', onBeforeunLoadHanlder, false);
+                                            window.removeEventListener('unload', onUnloadHandler, false);
+                                        });
+                                    }
+                                }
+                            );
+                        }
+                    }
+                );
+            }
+
+            function done() {
+                if(sforce.console.isInConsole()) {
+                    sforce.console.getEnclosingTabId(closeSubtab);
+                }else{
+                    window.history.back();;
+                }
+            }
+
+            function updateCharacters(){
+                var cs = j$('#messageTextArea').val();
+                var len = parseInt(utf8ByteLength(j$.trim(cs)));
+                j$("#characters").html(len);
+                var numberOfMessages = Math.ceil(len / 160);
+                j$('#numberOfMessages').text('(' + numberOfMessages + ')');
+            }
+
+            function confirmClose(data){
+                var tabid = data.id;
+                sforce.console.getEnclosingPrimaryTabId(function(result) {
+                    if(tabid == result.id){
+                        if(isAllProcessDone=='false' || isAllProcessDone == false){
+                            var delResult = sforce.connection.deleteIds([storageId]);
+                            console.log('after storage purge');
+                        }
+                    }
+                });
+            }
+
+            j$(document).ready(function() {
+                j$("[id$='TooltipIcon']").tooltip({
+                    placement: 'right',
+                    template: '<div class="slds-popover slds-popover--tooltip slds-nubbin--left tooltip" style="margin-left:15px" role="tooltip"><div class="slds-popover__body tooltip-inner"></div></div>',
+                    html: true,
+                    container: j$('#tooltipWrapper'),
+                });
+                sforce.console.getEnclosingPrimaryTabId(function(result) {
+                    sforce.console.setTabTitle('{!$Label.BulkCampaignTabTitle}', result.id);
+                    sforce.console.addEventListener(sforce.console.ConsoleEvent.CLOSE_TAB, confirmClose, {tabId : result.id});
+                });
+                window.addEventListener('beforeunload', onBeforeunLoadHanlder, false);
+                window.addEventListener('unload', onUnloadHandler, false);
+                if(campaignId == '' || campaignId == null){
+                    showInfoPanel('{!$Label.BulkCampaignReturnOnBrowserError}', 'error');
+                    j$('#confirmationPage').hide();
+                    j$('#insertDataPage').hide();
+                    j$('#donePage').hide();
+                    window.removeEventListener('beforeunload', onBeforeunLoadHanlder, false);
+                    window.removeEventListener('unload', onUnloadHandler, false);
+                    setTimeout(
+                        function(){
+                            if(sforce.console.isInConsole()) {
+                                sforce.console.setTabUnsavedChanges(false);
+                                sforce.console.getEnclosingTabId(closeSubtab);
+                            } else{
+                                window.history.back();
+                            }
+                       	}, 3000
+                  	);
+                }
+            });
+
+            function onBeforeunLoadHanlder(e){
+                if(isAllProcessDone=='false' || isAllProcessDone == false){
+                    var dialogText = '{!$Label.BulkBeforeUnload}', e = e || window.event;
+                    if(e){
+                        e.returnValue = dialogText;
+                    }
+                    return dialogText;
+                }
+            };
+            function onUnloadHandler(){
+                if(isAllProcessDone=='false' || isAllProcessDone == false){
+                    var delResult = sforce.connection.deleteIds([storageId]);
+                }
+            }
+
+            var readyStateCheckInterval = setInterval(function() {
+                if (document.readyState === "complete") {
+                    clearInterval(readyStateCheckInterval);
+                    sforce.console.getEnclosingPrimaryTabId(function(result) {
+                        sforce.console.setTabIcon('{!URLFOR($Resource.LiveText,'images/LTicon16.png')}', result.id);
+                        sforce.console.setTabUnsavedChanges(true);
+                    });
+                }
+            }, 10);
+
+        </script>
+    </html>
+</apex:page>

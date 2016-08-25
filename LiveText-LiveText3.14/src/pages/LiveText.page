@@ -1,0 +1,20 @@
+<apex:page standardController="Conversation_Session__c" extensions="LiveTextController" showHeader="false" action="{!init}" cache="false" >
+ <c:ScriptsComponent id="scmp"/>
+ <meta http-equiv="Content-Type" content="text/html; charset=utf-8"></meta>
+ <apex:pageMessages id="lt_pageMessages"/>
+ <apex:stylesheet value="{!URLFOR($Resource.Framework, 'framework/css/bootstrap.min.css')}"/>
+ <apex:includeScript value="{!URLFOR($Resource.Framework, 'framework/js/bootstrap.min.js')}"/>
+ <apex:includeScript value="/soap/ajax/31.0/connection.js"/>
+ <apex:includeScript value="/support/console/31.0/integration.js"/>
+ 
+<div class="section group">
+    <apex:outputPanel id="cd_section" layout="block" styleClass="col span_2_of_3" style="height:100%;width:100%; position:relative;">
+    	<c:ConversationDetail convHeaderId="{!conversationRecordId}" oid="{!originatingObjectId}" objectprefix="{!originatingObjectPrefix}" />
+    </apex:outputPanel>
+</div>
+    <apex:form >
+             <apex:outputPanel id="dummy2" >
+            	<apex:outputText id="hiddenoptxt" value="{!ConversationHeaderRecords}"  styleClass="display_none"/>
+            </apex:outputPanel>
+    </apex:form>
+</apex:page>
